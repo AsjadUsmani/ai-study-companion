@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser"
 import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/user.routes.js";
+import notesRoutes from "./routes/notes.routes.js";
 dotenv.config();
 
 const app = express();
@@ -36,5 +37,6 @@ app.get("/health", (req, res) => {
 
 app.use("/auth", authRoutes)
 app.use("/user", userRoutes)
+app.use("/notes", notesRoutes)
 
 export default app;
