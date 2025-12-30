@@ -5,6 +5,7 @@ import rateLimit from "express-rate-limit";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser"
 import authRoutes from "./routes/auth.routes.js";
+import userRoutes from "./routes/user.routes.js";
 dotenv.config();
 
 const app = express();
@@ -34,5 +35,6 @@ app.get("/health", (req, res) => {
 });
 
 app.use("/auth", authRoutes)
+app.use("/user", userRoutes)
 
 export default app;
