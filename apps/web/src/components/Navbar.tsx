@@ -3,8 +3,8 @@
 import { useRouter } from "next/navigation"
 
 export default function Navbar() {
+  const router = useRouter()
   const handleLogout = async () => {
-    const router = useRouter()
     await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/logout` ||"http://localhost:5000/auth/logout", {
       method: "POST",
       credentials: "include",

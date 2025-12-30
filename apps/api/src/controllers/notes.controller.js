@@ -10,7 +10,8 @@ export const createNote = async (req, res) => {
     );
     res.status(201).json(result.rows[0]);
   } catch (error) {
-    throw new Error(`Error:: Create Note: ${error}`);
+    console.error(`Error creating note: ${error}`);
+    res.status(500).json({ error: "Failed to create note" });
   }
 };
 
@@ -28,6 +29,7 @@ export const getNotes = async (req, res) => {
 
   res.json(result.rows)
   } catch (error) {
-    throw new Error(`Error:: Get Notes: ${error}`);
+    console.error(`Error fetching notes: ${error}`);
+    res.status(500).json({ error: "Failed to fetch notes" });
   }
 };
