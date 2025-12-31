@@ -37,15 +37,42 @@ export const getNotes = async (req, res) => {
 
 export const summarizeNote = async (req, res) => {
   try {
-    const { content } = req.body;
+    const { noteId } = req.body;
+    const userId = req.user.id;
 
-    const response = await aiClient.post("/summarize", {
-      text: content,
+    // 1. Get note
+    const noteRes = await pool.query(
+      "SELECT content, summary FROM notes WHERE id = $1 AND user_id = $2",
+      [noteId, userId]
+    );
+
+    if (noteRes.rows.length === 0) {
+      return res.status(404).json({ error: "Note not found" });
+    }
+
+    const note = noteRes.rows[0];
+
+    // 2. Return cached summary
+    if (note.summary) {
+      return res.json({ summary: note.summary, cached: true });
+    }
+
+    // 3. Call AI
+    const aiRes = await aiClient.post("/summarize", {
+      text: note.content,
     });
 
-    res.json(response.data);
+    const summary = aiRes.data.summary;
+
+    // 4. Save summary
+    await pool.query("UPDATE notes SET summary = $1 WHERE id = $2", [
+      summary,
+      req.body.noteId,
+    ]);
+
+    return res.json({ summary, cached: false });
   } catch (error) {
-    console.error(`Error summarizing notes: ${error}`);
-    res.status(500).json({ error: "Failed to summarize notes" });
+    console.error("Summarize error:", error);
+    res.status(500).json({ error: "Failed to summarize note" });
   }
 };
