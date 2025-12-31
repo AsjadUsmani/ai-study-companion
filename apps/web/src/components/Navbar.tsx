@@ -2,6 +2,14 @@
 
 import { useRouter } from "next/navigation"
 
+/**
+ * Top-level navigation bar with Home and Dashboard links and a Logout button.
+ *
+ * Clicking the Logout button sends a POST request to the configured backend `/auth/logout`
+ * including credentials, then navigates the user to `/login`.
+ *
+ * @returns A JSX element containing the navigation links and the Logout button.
+ */
 export default function Navbar() {
   const router = useRouter()
   const handleLogout = async () => {
