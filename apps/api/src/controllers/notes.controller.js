@@ -1,3 +1,4 @@
+import aiClient from "../utils/aiClient.js";
 import pool from "../utils/db.js";
 
 export const createNote = async (req, res) => {
@@ -10,7 +11,8 @@ export const createNote = async (req, res) => {
     );
     res.status(201).json(result.rows[0]);
   } catch (error) {
-    throw new Error(`Error:: Create Note: ${error}`);
+    console.error(`Error creating note: ${error}`);
+    res.status(500).json({ error: "Failed to create note" });
   }
 };
 
@@ -18,16 +20,32 @@ export const getNotes = async (req, res) => {
   try {
     const userId = req.user.id;
 
-  const result = await pool.query(
-    `SELECT id, title, content, created_at
+    const result = await pool.query(
+      `SELECT id, title, content, created_at
      FROM notes
      WHERE user_id = $1
      ORDER BY created_at DESC`,
-    [userId]
-  )
+      [userId]
+    );
 
-  res.json(result.rows)
+    res.json(result.rows);
   } catch (error) {
-    throw new Error(`Error:: Get Notes: ${error}`);
+    console.error(`Error fetching notes: ${error}`);
+    res.status(500).json({ error: "Failed to fetch notes" });
+  }
+};
+
+export const summarizeNote = async (req, res) => {
+  try {
+    const { content } = req.body;
+
+    const response = await aiClient.post("/summarize", {
+      text: content,
+    });
+
+    res.json(response.data);
+  } catch (error) {
+    console.error(`Error summarizing notes: ${error}`);
+    res.status(500).json({ error: "Failed to summarize notes" });
   }
 };
