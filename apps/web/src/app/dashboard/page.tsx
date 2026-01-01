@@ -23,6 +23,14 @@ type Note = {
   created_at: string;
 };
 
+/**
+ * Render the dashboard page showing searchable, paginated notes and controls for AI summarization.
+ *
+ * Performs client-side fetching of notes from the backend and provides UI for searching, pagination,
+ * and requesting AI-generated summaries for individual notes.
+ *
+ * @returns The React element for the dashboard page.
+ */
 export default function DashboardPage() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [search, setSearch] = useState("");
