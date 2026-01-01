@@ -32,8 +32,7 @@ export default function DashboardPage() {
     const fetchNotes = async () => {
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/notes` ||
-            "http://localhost:5000/notes",
+          `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000"}/notes`,
           { credentials: "include" }
         );
 
@@ -72,8 +71,7 @@ export default function DashboardPage() {
     setSummarizingId(noteId);
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/notes/summarize` ||
-          "http://localhost:5000/notes/summarize",
+        `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000"}/notes/summarize`,
         {
           method: "POST",
           credentials: "include",

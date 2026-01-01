@@ -15,12 +15,16 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    // Client-side validation
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters long.");
+      return;
+    }
     setIsLoading(true);
 
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/register` ||
-          "http://localhost:5000/auth/register",
+        `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000"}/auth/register`,
         {
           method: "POST",
           credentials: "include",
