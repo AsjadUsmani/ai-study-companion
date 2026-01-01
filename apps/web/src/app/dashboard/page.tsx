@@ -36,10 +36,11 @@ export default function DashboardPage() {
 
   useEffect(() => {
     setLoading(true);
+    setError(null);
     fetch(
       `${
         process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000"
-      }/notes?search=${search}&page=${page}&limit=${limit}`,
+      }/notes?search=${encodeURIComponent(search)}&page=${page}&limit=${limit}`,
       { credentials: "include" }
     )
       .then((res) => res.json())
