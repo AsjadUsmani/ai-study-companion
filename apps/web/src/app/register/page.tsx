@@ -5,6 +5,15 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Mail, Lock, Loader2, ArrowRight, BrainCircuit, AlertCircle, UserCheck } from "lucide-react";
 
+/**
+ * Render the registration page containing an email/password form and submission handling.
+ *
+ * The component displays a styled sign-up form with client-side state for email, password,
+ * error, and loading. Submitting the form sends credentials to the backend registration
+ * endpoint, displays backend or network errors inline, and navigates to the login page on success.
+ *
+ * @returns A JSX element rendering the registration UI.
+ */
 export default function RegisterPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
