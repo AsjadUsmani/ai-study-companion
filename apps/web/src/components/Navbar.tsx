@@ -15,6 +15,16 @@ import {
   X
 } from "lucide-react";
 
+/**
+ * Responsive navigation bar that displays navigation and auth controls based on client-side session state.
+ *
+ * The component reads the current pathname and document cookies to determine whether the user is considered logged in,
+ * shows Home (and Dashboard when logged in), and conditionally renders Login/Register or a Logout control.
+ * It provides a toggleable mobile menu, highlights the active route, and calls the backend logout endpoint when the user logs out,
+ * then navigates to `/login` on successful logout.
+ *
+ * @returns A JSX element representing the navigation bar.
+ */
 export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();

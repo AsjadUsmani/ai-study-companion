@@ -20,6 +20,13 @@ type Note = {
   summary?: string;
 };
 
+/**
+ * Render the Study Companion dashboard that displays notes, summaries, and summarization controls.
+ *
+ * The component fetches notes from the backend on mount, redirects to /login when the backend responds with 401 or 403, and allows generating AI summaries for individual notes. It manages loading state, the notes list, and a per-note in-progress indicator that updates the UI when a summary is produced.
+ *
+ * @returns The dashboard page element that shows a full-page loading view, an empty-state prompt when no notes exist, or a responsive grid of note cards with per-note AI summary panels and action controls.
+ */
 export default function DashboardPage() {
   const router = useRouter();
   const [notes, setNotes] = useState<Note[]>([]);

@@ -5,6 +5,16 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Mail, Lock, Loader2, ArrowRight, BrainCircuit, AlertCircle } from "lucide-react";
 
+/**
+ * Render the login page UI and handle user authentication.
+ *
+ * Displays an animated sign-in form with email and password inputs, inline error feedback,
+ * a loading state, and navigation to the dashboard on successful login. Submits credentials
+ * to the backend login endpoint derived from NEXT_PUBLIC_BACKEND_URL (falls back to
+ * http://localhost:5000/auth/login) and includes cookies in the request.
+ *
+ * @returns The login page JSX element.
+ */
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");

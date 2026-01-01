@@ -15,7 +15,11 @@ import {
   UserPlus
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-// Mock router functionality for the preview environment
+/**
+ * Renders the landing page for the Study Companion app including navigation, hero, feature grid, interactive demo panel, and footer.
+ *
+ * @returns The React element that renders the full landing page layout and interactive UI.
+ */
 
 
 export default function App() {
