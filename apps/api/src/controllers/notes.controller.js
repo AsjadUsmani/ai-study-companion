@@ -38,6 +38,11 @@ export const getNotes = async (req, res) => {
 export const summarizeNote = async (req, res) => {
   try {
     const { noteId } = req.body;
+
+    if (!noteId) {
+      return res.status(400).json({ error: "noteId is required" });
+    }
+
     const userId = req.user.id;
 
     // 1. Get note
@@ -62,12 +67,15 @@ export const summarizeNote = async (req, res) => {
       text: note.content,
     });
 
-    const summary = aiRes.data.summary;
+    const summary = aiRes.data?.summary;
 
+    if (!summary) {
+      throw new Error("AI service returned invalid response");
+    }
     // 4. Save summary
     await pool.query("UPDATE notes SET summary = $1 WHERE id = $2", [
       summary,
-      req.body.noteId,
+      noteId,
     ]);
 
     return res.json({ summary, cached: false });

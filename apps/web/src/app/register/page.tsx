@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Mail, Lock, Loader2, ArrowRight, BrainCircuit, AlertCircle } from "lucide-react";
+import { Mail, Lock, Loader2, ArrowRight, BrainCircuit, AlertCircle, UserCheck } from "lucide-react";
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -19,8 +19,8 @@ export default function LoginPage() {
 
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/login` ||
-          "http://localhost:5000/auth/login",
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/register` ||
+          "http://localhost:5000/auth/register",
         {
           method: "POST",
           credentials: "include",
@@ -32,15 +32,16 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Login failed");
+        // Correctly handle 409 (Conflict) and other error codes from your backend
+        setError(data.error || data.message || "Registration failed. Please try again.");
         setIsLoading(false);
         return;
       }
 
-      // Success animation delay/router push
-      router.push("/dashboard");
+      // Success: Redirect to login page
+      router.push("/login");
     } catch (err) {
-      setError("Something went wrong. Please try again.");
+      setError("Unable to connect to the server. Please check your backend.");
       setIsLoading(false);
     }
   };
@@ -48,7 +49,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-neutral-950 flex items-center justify-center p-4 font-sans selection:bg-violet-500/30">
       {/* Background Gradient Effect */}
-      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-violet-900/20 via-neutral-950 to-neutral-950 pointer-events-none" />
+      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-violet-900/20 via-neutral-950 to-neutral-950 pointer-events-none" />
 
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
@@ -62,16 +63,16 @@ export default function LoginPage() {
           {/* Header */}
           <div className="p-8 pb-6 text-center border-b border-white/5">
             <div className="inline-flex p-3 rounded-xl bg-violet-500/10 border border-violet-500/20 mb-4">
-              <BrainCircuit className="w-8 h-8 text-violet-400" />
+              <UserCheck className="w-8 h-8 text-violet-400" />
             </div>
-            <h2 className="text-2xl font-bold text-white tracking-tight">Welcome Back</h2>
+            <h2 className="text-2xl font-bold text-white tracking-tight">Create Account</h2>
             <p className="text-neutral-400 text-sm mt-2">
-              Sign in to access your AI study companion
+              Join the AI-powered learning revolution
             </p>
           </div>
 
           <div className="p-8 pt-6">
-            {/* Error Message */}
+            {/* Error Message Display */}
             {error && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
@@ -94,7 +95,7 @@ export default function LoginPage() {
                   </div>
                   <input
                     type="email"
-                    placeholder="student@example.com"
+                    placeholder="student@university.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -105,22 +106,21 @@ export default function LoginPage() {
 
               {/* Password Input */}
               <div className="space-y-1.5">
-                <div className="flex justify-between items-center ml-1">
-                  <label className="text-xs font-medium text-neutral-400">Password</label>
-                </div>
+                <label className="text-xs font-medium text-neutral-400 ml-1">Password</label>
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Lock className="h-5 w-5 text-neutral-500 group-focus-within:text-violet-400 transition-colors" />
                   </div>
                   <input
                     type="password"
-                    placeholder="••••••••"
+                    placeholder="Create a strong password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     className="w-full bg-neutral-950/50 border border-white/10 text-neutral-200 rounded-xl py-2.5 pl-10 pr-4 placeholder:text-neutral-600 focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/50 transition-all"
                   />
                 </div>
+                <p className="text-[10px] text-neutral-500 ml-1">Must be at least 8 characters long.</p>
               </div>
 
               {/* Submit Button */}
@@ -132,11 +132,11 @@ export default function LoginPage() {
                 {isLoading ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Signing in...</span>
+                    <span>Creating Account...</span>
                   </>
                 ) : (
                   <>
-                    <span>Sign In</span>
+                    <span>Get Started</span>
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                   </>
                 )}
@@ -144,12 +144,15 @@ export default function LoginPage() {
             </form>
 
             {/* Footer */}
-            <div className="mt-6 text-center">
+            <div className="mt-6 text-center border-t border-white/5 pt-6">
               <p className="text-sm text-neutral-500">
-                Don't have an account?{" "}
-                <a href="/register" className="text-violet-400 hover:text-violet-300 font-medium transition-colors">
-                  Create one
-                </a>
+                Already have an account?{" "}
+                <button 
+                  onClick={() => router.push("/login")}
+                  className="text-violet-400 hover:text-violet-300 font-medium transition-colors"
+                >
+                  Sign In
+                </button>
               </p>
             </div>
           </div>
