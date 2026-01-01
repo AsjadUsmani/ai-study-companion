@@ -1,76 +1,58 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Sparkles,
-  BookOpen,
-  Loader2,
-  Bot,
+  Search,
+  Plus,
   FileText,
-  BrainCircuit,
+  Sparkles,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  BookOpen,
+  Clock,
+  LayoutGrid,
 } from "lucide-react";
-import Navbar from "@/components/Navbar";
 
 type Note = {
   id: string;
   title: string;
   content: string;
   summary?: string;
+  created_at: string;
 };
 
 export default function DashboardPage() {
-  const router = useRouter();
   const [notes, setNotes] = useState<Note[]>([]);
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [summarizingId, setSummarizingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  // --- Fetch Notes Logic (Unchanged Routes) ---
+  const limit = 5;
+
   useEffect(() => {
-    let isMounted = true;
+    setLoading(true);
+    fetch(
+      `${
+        process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000"
+      }/notes?search=${search}&page=${page}&limit=${limit}`,
+      { credentials: "include" }
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        // Handle potential undefined notes from backend bug
+        setNotes(data.notes || []);
+        setTotal(data.total || 0);
+      })
+      .catch(() => setError("Failed to load notes"))
+      .finally(() => setLoading(false));
+  }, [search, page]);
 
-    const fetchNotes = async () => {
-      try {
-        const res = await fetch(
-          `${
-            process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000"
-          }/notes`,
-          { credentials: "include" }
-        );
-
-        if (res.status === 401 || res.status === 403) {
-          router.push("/login");
-          return;
-        }
-
-        const data = await res.json();
-
-        if (isMounted) {
-          if (Array.isArray(data)) {
-            setNotes(data);
-          } else {
-            console.error("Received non-array data:", data);
-            setNotes([]);
-          }
-        }
-      } catch (err) {
-        console.error("Fetch error:", err);
-        if (isMounted) setNotes([]);
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    };
-
-    fetchNotes();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [router]);
-
-  // --- Summarize Logic (Unchanged Routes) ---
-  const summarizeNote = async (noteId: string) => {
+  const handleSummarize = async (noteId: string) => {
     setSummarizingId(noteId);
     try {
       const res = await fetch(
@@ -79,193 +61,193 @@ export default function DashboardPage() {
         }/notes/summarize`,
         {
           method: "POST",
-          credentials: "include",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ noteId }),
+          credentials: "include",
         }
       );
-
       const data = await res.json();
-
       if (res.ok) {
         setNotes((prev) =>
-          prev.map((note) =>
-            note.id === noteId ? { ...note, summary: data.summary } : note
+          prev.map((n) =>
+            n.id === noteId ? { ...n, summary: data.summary } : n
           )
         );
       }
-    } catch (error) {
-      console.error("Summarization failed:", error);
+    } catch (err) {
+      console.error("Summarize error:", err);
     } finally {
       setSummarizingId(null);
     }
   };
 
-  // --- Animation Variants ---
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0 },
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-neutral-950 flex items-center justify-center text-neutral-400">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-8 h-8 animate-spin text-violet-500" />
-          <p className="text-sm font-medium tracking-wide">
-            Syncing your knowledge base...
-          </p>
-        </div>
-      </div>
-    );
-  }
+  const totalPages = Math.ceil(total / limit);
 
   return (
-    <div>
-      <Navbar/>
-      <div className="min-h-screen bg-neutral-950 text-neutral-200 font-sans selection:bg-violet-500/30">
-        {/* Background Gradient Effect */}
-        <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-violet-900/20 via-neutral-950 to-neutral-950 pointer-events-none z-0" />
+    <div className="min-h-screen bg-neutral-950 text-neutral-200 p-6 font-sans">
+      <div className="max-w-5xl mx-auto space-y-8">
+        {/* Header Section */}
+        <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-white tracking-tight">
+              Your Library
+            </h1>
+            <p className="text-neutral-500 text-sm mt-1">
+              Manage and summarize your study materials.
+            </p>
+          </div>
+          <button className="flex items-center gap-2 bg-violet-600 hover:bg-violet-500 text-white px-5 py-2.5 rounded-xl font-semibold transition-all shadow-lg shadow-violet-900/20 active:scale-95">
+            <Plus className="w-5 h-5" />
+            New Note
+          </button>
+        </header>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-6 py-12">
-          {/* Header */}
-          <header className="mb-12 flex items-center justify-between border-b border-white/10 pb-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-violet-600/20 rounded-lg border border-violet-500/30">
-                <BrainCircuit className="w-6 h-6 text-violet-400" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold text-white tracking-tight">
-                  Study Companion
-                </h1>
-                <p className="text-neutral-500 text-sm">
-                  AI-powered knowledge management
-                </p>
-              </div>
+        {/* Search & Stats Bar */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="md:col-span-3 relative group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-500 group-focus-within:text-violet-400 transition-colors" />
+            <input
+              type="text"
+              placeholder="Search by title or content..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+              className="w-full bg-neutral-900/50 border border-white/10 rounded-2xl py-3 pl-12 pr-4 text-white placeholder:text-neutral-600 focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition-all"
+            />
+          </div>
+          <div className="bg-neutral-900/50 border border-white/10 rounded-2xl px-6 py-3 flex items-center justify-center gap-3">
+            <BookOpen className="w-5 h-5 text-violet-400" />
+            <span className="font-bold text-white">{total}</span>
+            <span className="text-neutral-500 text-sm">Notes</span>
+          </div>
+        </div>
+
+        {/* Notes Grid */}
+        <div className="space-y-4 relative min-h-100">
+          {error && <div className="text-red-400 text-sm">{error}</div>}
+          {loading ? (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Loader2 className="w-10 h-10 text-violet-500 animate-spin" />
             </div>
-          </header>
-
-          {/* Content Grid */}
-          {notes.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-center py-20 border border-dashed border-neutral-800 rounded-xl bg-neutral-900/50"
-            >
-              <BookOpen className="w-12 h-12 text-neutral-600 mx-auto mb-4" />
-              <h3 className="text-xl font-medium text-neutral-300">
-                No notes found
-              </h3>
-              <p className="text-neutral-500 mt-2">
-                Start taking notes to see them here.
-              </p>
-            </motion.div>
-          ) : (
-            <motion.div
-              variants={containerVariants}
-              initial="hidden"
-              animate="show"
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-            >
+          ) : notes.length > 0 ? (
+            <AnimatePresence mode="popLayout">
               {notes.map((note) => (
                 <motion.div
                   key={note.id}
-                  variants={itemVariants}
                   layout
-                  className="group relative flex flex-col bg-neutral-900/60 backdrop-blur-sm border border-white/5 rounded-xl hover:border-violet-500/30 hover:bg-neutral-900/80 transition-all duration-300 overflow-hidden shadow-lg shadow-black/20"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="bg-neutral-900/40 border border-white/5 backdrop-blur-sm rounded-2xl overflow-hidden hover:border-white/10 transition-colors group"
                 >
-                  {/* Card Header */}
-                  <div className="p-6 pb-4 flex-grow">
-                    <div className="flex items-start justify-between gap-4 mb-3">
-                      <h3 className="font-semibold text-lg text-white group-hover:text-violet-200 transition-colors">
-                        {note.title}
-                      </h3>
-                      <FileText className="w-5 h-5 text-neutral-600 group-hover:text-neutral-500 flex-shrink-0" />
+                  <div className="p-6 space-y-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="space-y-1">
+                        <h3 className="text-xl font-bold text-white group-hover:text-violet-400 transition-colors">
+                          {note.title}
+                        </h3>
+                        <div className="flex items-center gap-3 text-xs text-neutral-500">
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {new Date(note.created_at).toLocaleDateString()}
+                          </span>
+                          <span className="w-1 h-1 rounded-full bg-neutral-700" />
+                          <span>
+                            {Math.ceil(note.content.split(" ").length / 200)}{" "}
+                            min read
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleSummarize(note.id)}
+                        disabled={summarizingId === note.id}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all
+                          ${
+                            note.summary
+                              ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                              : "bg-violet-500/10 text-violet-400 border border-violet-500/20 hover:bg-violet-500/20"
+                          }`}
+                      >
+                        {summarizingId === note.id ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <Sparkles className="w-3 h-3" />
+                        )}
+                        {note.summary ? "Summarized" : "AI Summarize"}
+                      </button>
                     </div>
-                    <p className="text-sm text-neutral-400 leading-relaxed line-clamp-4">
+
+                    <p className="text-neutral-400 text-sm leading-relaxed line-clamp-3">
                       {note.content}
                     </p>
-                  </div>
 
-                  {/* AI Summary Section (Animated) */}
-                  <AnimatePresence>
                     {note.summary && (
                       <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="bg-violet-950/30 border-t border-violet-500/20"
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        className="bg-violet-500/5 border border-violet-500/10 rounded-xl p-4 mt-4"
                       >
-                        <div className="p-4 relative">
-                          {/* Glowing accent line */}
-                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-violet-500/50" />
-
-                          <div className="flex items-center gap-2 mb-2">
-                            <Bot className="w-4 h-4 text-violet-400" />
-                            <span className="text-xs font-bold text-violet-400 uppercase tracking-wider">
-                              AI Summary
-                            </span>
-                          </div>
-                          <p className="text-sm text-violet-100/80 leading-relaxed">
-                            {note.summary}
-                          </p>
+                        <div className="flex items-center gap-2 mb-2 text-violet-400">
+                          <Sparkles className="w-4 h-4" />
+                          <span className="text-xs font-bold uppercase tracking-tighter">
+                            AI Summary
+                          </span>
                         </div>
+                        <p className="text-neutral-300 text-sm italic leading-relaxed">
+                          {note.summary}
+                        </p>
                       </motion.div>
                     )}
-                  </AnimatePresence>
-
-                  {/* Card Footer / Action Button */}
-                  <div className="p-4 pt-2 mt-auto border-t border-white/5 bg-neutral-900/40">
-                    <button
-                      onClick={() => summarizeNote(note.id)}
-                      disabled={summarizingId === note.id || !!note.summary}
-                      className={`
-                      w-full relative overflow-hidden flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-medium transition-all
-                      ${
-                        note.summary
-                          ? "bg-transparent text-neutral-500 cursor-default"
-                          : "bg-white/5 hover:bg-violet-600 hover:text-white text-neutral-300 border border-white/10 hover:border-violet-500"
-                      }
-                      ${
-                        summarizingId === note.id
-                          ? "opacity-80 cursor-wait"
-                          : ""
-                      }
-                    `}
-                    >
-                      {summarizingId === note.id ? (
-                        <>
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          <span>Processing...</span>
-                        </>
-                      ) : note.summary ? (
-                        <>
-                          <Sparkles className="w-4 h-4" />
-                          <span>Summarized</span>
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="w-4 h-4" />
-                          <span>Generate AI Summary</span>
-                        </>
-                      )}
-                    </button>
                   </div>
                 </motion.div>
               ))}
-            </motion.div>
+            </AnimatePresence>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-20 text-neutral-600 border-2 border-dashed border-white/5 rounded-3xl">
+              <FileText className="w-12 h-12 mb-4 opacity-20" />
+              <p>No notes found matching your search.</p>
+            </div>
           )}
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-4 pt-4 pb-12">
+            <button
+              disabled={page === 1}
+              onClick={() => setPage((p) => p - 1)}
+              className="p-2 rounded-lg bg-neutral-900 border border-white/10 text-neutral-400 disabled:opacity-20 hover:text-white transition-all active:scale-90"
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+
+            <div className="flex items-center gap-2">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
+                <button
+                  key={n}
+                  onClick={() => setPage(n)}
+                  className={`w-10 h-10 rounded-lg text-sm font-bold transition-all ${
+                    page === n
+                      ? "bg-violet-600 text-white shadow-lg shadow-violet-900/20"
+                      : "bg-neutral-900 text-neutral-500 hover:text-white"
+                  }`}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+
+            <button
+              disabled={page === totalPages}
+              onClick={() => setPage((p) => p + 1)}
+              className="p-2 rounded-lg bg-neutral-900 border border-white/10 text-neutral-400 disabled:opacity-20 hover:text-white transition-all active:scale-90"
+            >
+              <ChevronRight className="w-6 h-6" />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -19,16 +19,44 @@ export const createNote = async (req, res) => {
 export const getNotes = async (req, res) => {
   try {
     const userId = req.user.id;
+    const search = req.query.search || "";
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 5;
+    const offset = (page - 1) * limit;
 
-    const result = await pool.query(
-      `SELECT id, title, content, created_at
-     FROM notes
-     WHERE user_id = $1
-     ORDER BY created_at DESC`,
-      [userId]
+    const notesRes = await pool.query(
+      `
+    SELECT id, title, content, summary, created_at
+    FROM notes
+    WHERE user_id = $1
+      AND (
+        title ILIKE $2
+        OR content ILIKE $2
+      )
+    ORDER BY created_at DESC
+    LIMIT $3 OFFSET $4
+    `,
+      [userId, `%${search}%`, limit, offset]
     );
 
-    res.json(result.rows);
+    const countRes = await pool.query(
+      `
+    SELECT COUNT(*) FROM notes
+    WHERE user_id = $1
+      AND (
+        title ILIKE $2
+        OR content ILIKE $2
+      )
+    `,
+      [userId, `%${search}%`]
+    );
+
+    res.json({
+      notes: notesRes.rows,
+      total: parseInt(countRes.rows[0].count),
+      page,
+      limit,
+    });
   } catch (error) {
     console.error(`Error fetching notes: ${error}`);
     res.status(500).json({ error: "Failed to fetch notes" });
