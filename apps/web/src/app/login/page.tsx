@@ -19,8 +19,7 @@ export default function LoginPage() {
 
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/login` ||
-          "http://localhost:5000/auth/login",
+        `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000"}/auth/login`,
         {
           method: "POST",
           credentials: "include",
