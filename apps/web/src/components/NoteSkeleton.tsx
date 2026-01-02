@@ -1,3 +1,8 @@
+/**
+ * Renders a pulsing card-style skeleton placeholder for a note.
+ *
+ * @returns A JSX element containing stacked placeholder bars representing a note's title and content
+ */
 export default function NoteSkeleton() {
   return (
     <div className="animate-pulse bg-neutral-900/40 border border-white/5 rounded-2xl p-6 space-y-4">

@@ -15,7 +15,15 @@ import {
   UserPlus
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-// Mock router functionality for the preview environment
+/**
+ * Render the Study Companion landing page used in preview environments.
+ *
+ * Renders a complete landing UI with navigation, hero section, animated feature grid,
+ * a "Why Choose Us" interactive section, and footer. Navigation buttons use the Next.js
+ * router for client-side navigation.
+ *
+ * @returns The React element for the Study Companion landing page.
+ */
 
 
 export default function App() {
