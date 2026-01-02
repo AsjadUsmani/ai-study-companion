@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   BrainCircuit, 
@@ -12,20 +12,59 @@ import {
   ArrowRight,
   CheckCircle2,
   LogIn,
-  UserPlus
+  LayoutDashboard,
+  LogOut,
+  Loader2
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-// Mock router functionality for the preview environment
 
 
 export default function App() {
   const router = useRouter();
+  const [user, setUser] = useState<{ id: string; email: string } | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Check auth status on mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000"}/user/me`,
+          { credentials: "include" }
+        );
+        if (res.ok) {
+          const data = await res.json();
+          setUser({ id: data.userId, email: "" }); // Minimal state from your /me route
+        }
+      } catch (err) {
+        console.error("Auth check failed");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    checkAuth();
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000"}/auth/logout`,
+        { method: "POST", credentials: "include" }
+      );
+      if (res.ok) {
+        setUser(null);
+        router.refresh();
+      }
+    } catch (err) {
+      console.error("Logout failed");
+    }
+  };
 
   const containerVariants = {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
-      transition: { staggerChildren: 0.2 }
+      transition: { staggerChildren: 0.1 }
     }
   };
 
@@ -73,26 +112,52 @@ export default function App() {
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-blue-900/10 blur-[120px]" />
       </div>
 
-      {/* Simple Navigation for Landing */}
+      {/* Navigation */}
       <nav className="relative z-50 border-b border-white/5 bg-neutral-950/50 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <BrainCircuit className="w-6 h-6 text-violet-400" />
-            <span className="font-bold text-white tracking-tight">Study Companion</span>
+        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+          <div className="flex items-center gap-3 group cursor-pointer" onClick={() => router.push("/")}>
+            <div className="w-10 h-10 rounded-xl bg-violet-600 flex items-center justify-center shadow-lg shadow-violet-600/20 group-hover:scale-110 transition-transform">
+              <BrainCircuit className="w-6 h-6 text-white" />
+            </div>
+            <span className="font-bold text-xl text-white tracking-tighter">StudyCompanion</span>
           </div>
-          <div className="flex items-center gap-4">
-            <button 
-              onClick={() => router.push("/login")}
-              className="text-sm font-medium text-neutral-400 hover:text-white transition-colors"
-            >
-              Login
-            </button>
-            <button 
-              onClick={() => router.push("/register")}
-              className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-bold rounded-lg transition-all"
-            >
-              Join Free
-            </button>
+
+          <div className="flex items-center gap-6">
+            {isLoading ? (
+              <Loader2 className="w-5 h-5 animate-spin text-neutral-500" />
+            ) : user ? (
+              <div className="flex items-center gap-3">
+                <button 
+                  onClick={() => router.push("/dashboard")}
+                  className="hidden sm:flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-white text-sm font-bold rounded-xl transition-all border border-white/10"
+                >
+                  <LayoutDashboard className="w-4 h-4" />
+                  Dashboard
+                </button>
+                <button 
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-sm font-bold rounded-xl transition-all border border-red-500/20"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span className="hidden sm:inline">Logout</span>
+                </button>
+              </div>
+            ) : (
+              <>
+                <button 
+                  onClick={() => router.push("/login")}
+                  className="text-sm font-bold text-neutral-400 hover:text-white transition-colors"
+                >
+                  Sign In
+                </button>
+                <button 
+                  onClick={() => router.push("/register")}
+                  className="px-6 py-2.5 bg-violet-600 hover:bg-violet-500 text-white text-sm font-black rounded-xl transition-all shadow-lg shadow-violet-600/20 active:scale-95"
+                >
+                  Join Free
+                </button>
+              </>
+            )}
           </div>
         </div>
       </nav>
@@ -103,16 +168,16 @@ export default function App() {
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-400 text-xs font-bold tracking-widest uppercase mb-8"
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-400 text-[10px] font-black tracking-[0.2em] uppercase mb-8"
           >
-            <Sparkles className="w-3 h-3" />
-            <span>Highly Recommended ⭐</span>
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>AI-Powered Learning Suite</span>
           </motion.div>
 
           <motion.h1 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-5xl md:text-7xl font-extrabold text-white tracking-tight mb-6"
+            className="text-6xl md:text-8xl font-black text-white tracking-tightest mb-8 leading-[0.9]"
           >
             Study <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-blue-400">Smarter</span>,<br />Not Harder.
           </motion.h1>
@@ -121,7 +186,7 @@ export default function App() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="max-w-2xl mx-auto text-lg text-neutral-400 leading-relaxed mb-10"
+            className="max-w-2xl mx-auto text-xl text-neutral-400 leading-relaxed mb-12 font-medium"
           >
             Your intelligent study companion that summarizes notes, explains complex topics, 
             and tracks your progress using cutting-edge AI.
@@ -133,28 +198,43 @@ export default function App() {
             transition={{ delay: 0.2 }}
             className="flex flex-col sm:flex-row items-center justify-center gap-4"
           >
-            <button 
-              onClick={() => router.push("/register")}
-              className="px-8 py-4 bg-violet-600 hover:bg-violet-500 text-white rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-violet-900/20 group"
-            >
-              Get Started for Free
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </button>
-            <button 
-              onClick={() => router.push("/login")}
-              className="px-8 py-4 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-xl font-bold transition-all flex items-center gap-2"
-            >
-              <LogIn className="w-4 h-4" />
-              Sign In
-            </button>
+            {user ? (
+              <button 
+                onClick={() => router.push("/dashboard")}
+                className="px-10 py-5 bg-white text-black rounded-2xl font-black flex items-center gap-3 transition-all shadow-2xl hover:bg-neutral-200 group active:scale-95"
+              >
+                Go to Dashboard
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </button>
+            ) : (
+              <>
+                <button 
+                  onClick={() => router.push("/register")}
+                  className="w-full sm:w-auto px-10 py-5 bg-violet-600 hover:bg-violet-500 text-white rounded-2xl font-black flex items-center justify-center gap-3 transition-all shadow-xl shadow-violet-600/20 group active:scale-95"
+                >
+                  Get Started for Free
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </button>
+                <button 
+                  onClick={() => router.push("/login")}
+                  className="w-full sm:w-auto px-10 py-5 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-2xl font-black transition-all flex items-center justify-center gap-3 active:scale-95"
+                >
+                  <LogIn className="w-5 h-5" />
+                  Sign In
+                </button>
+              </>
+            )}
           </motion.div>
         </section>
 
         {/* Feature Grid */}
-        <section className="max-w-7xl mx-auto px-6 py-20">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-white mb-4 tracking-tight">Master Any Subject</h2>
-            <p className="text-neutral-500">Core features designed to supercharge your learning.</p>
+        <section className="max-w-7xl mx-auto px-6 py-24 border-t border-white/5">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-20">
+            <div className="space-y-4">
+              <h2 className="text-4xl font-black text-white tracking-tight">Master Any Subject</h2>
+              <p className="text-neutral-500 text-lg font-medium">Core features designed to supercharge your learning.</p>
+            </div>
+            <div className="hidden md:block h-px flex-1 mx-12 bg-white/5" />
           </div>
 
           <motion.div 
@@ -162,19 +242,22 @@ export default function App() {
             initial="hidden"
             whileInView="show"
             viewport={{ once: true }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
           >
             {features.map((feature, idx) => (
               <motion.div
                 key={idx}
                 variants={itemVariants}
-                className="p-8 rounded-2xl bg-neutral-900/40 border border-white/5 backdrop-blur-sm hover:border-violet-500/30 transition-all group"
+                className="p-10 rounded-[2.5rem] bg-neutral-900/40 border border-white/5 backdrop-blur-sm hover:border-violet-500/30 transition-all group relative overflow-hidden"
               >
-                <div className={`w-12 h-12 rounded-xl ${feature.bg} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
-                  <feature.icon className={`w-6 h-6 ${feature.color}`} />
+                <div className="absolute top-0 right-0 p-8 opacity-0 group-hover:opacity-10 transition-opacity">
+                   <feature.icon className={`w-24 h-24 ${feature.color}`} />
                 </div>
-                <h3 className="text-xl font-bold text-white mb-3">{feature.title}</h3>
-                <p className="text-neutral-400 text-sm leading-relaxed">
+                <div className={`w-14 h-14 rounded-2xl ${feature.bg} flex items-center justify-center mb-8 group-hover:scale-110 transition-transform`}>
+                  <feature.icon className={`w-7 h-7 ${feature.color}`} />
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-4 leading-tight">{feature.title}</h3>
+                <p className="text-neutral-400 text-base leading-relaxed font-medium">
                   {feature.description}
                 </p>
               </motion.div>
@@ -182,31 +265,35 @@ export default function App() {
           </motion.div>
         </section>
 
-        {/* Interactive "Why Choose Us" Section */}
-        <section className="max-w-7xl mx-auto px-6 py-20 border-t border-white/5">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+        {/* Why Us */}
+        <section className="max-w-7xl mx-auto px-6 py-32 border-t border-white/5">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-24 items-center">
             <motion.div
               initial={{ opacity: 0, x: -30 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
+              className="space-y-10"
             >
-              <h2 className="text-4xl font-bold text-white mb-8 tracking-tight">
-                Designed for the <br />Modern Student
-              </h2>
-              <div className="space-y-6">
-                {[
-                  "AI service powered by specialized study models",
-                  "Cross-platform access for learning on the go",
-                  "Secure and private storage for all your data",
-                  "Seamless PDF and document integration"
-                ].map((text, i) => (
-                  <div key={i} className="flex items-center gap-4 group">
-                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <div className="space-y-8">
+                <h2 className="text-5xl font-black text-white tracking-tighter leading-none">
+                  Designed for the <br />
+                  <span className="text-neutral-600">Modern Student</span>
+                </h2>
+                <div className="grid gap-6">
+                  {[
+                    "AI service powered by specialized study models",
+                    "Cross-platform access for learning on the go",
+                    "Secure and private storage for all your data",
+                    "Seamless PDF and document integration"
+                  ].map((text, i) => (
+                    <div key={i} className="flex items-center gap-5 group">
+                      <div className="flex-shrink-0 w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
+                        <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                      </div>
+                      <span className="text-neutral-300 font-bold text-lg">{text}</span>
                     </div>
-                    <span className="text-neutral-300 font-medium">{text}</span>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </motion.div>
 
@@ -214,23 +301,23 @@ export default function App() {
               initial={{ opacity: 0, x: 30 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              className="relative rounded-2xl overflow-hidden border border-white/10 bg-neutral-900/50 group"
+              className="relative rounded-[3rem] overflow-hidden border border-white/10 bg-neutral-900/50 group shadow-2xl"
             >
-              <div className="aspect-video bg-gradient-to-br from-violet-600/10 to-blue-600/10 flex items-center justify-center">
-                <BrainCircuit className="w-24 h-24 text-violet-500/20 group-hover:scale-110 transition-transform duration-700" />
+              <div className="aspect-square sm:aspect-video bg-gradient-to-br from-violet-600/20 to-blue-600/10 flex items-center justify-center">
+                <BrainCircuit className="w-32 h-32 text-violet-500/20 group-hover:scale-110 transition-transform duration-1000" />
               </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-transparent to-transparent opacity-60" />
-              <div className="absolute bottom-6 left-6 right-6 p-5 rounded-xl bg-neutral-900/90 backdrop-blur-xl border border-white/10 shadow-2xl">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-2 h-2 rounded-full bg-violet-500" />
-                  <span className="text-[10px] text-violet-400 font-bold uppercase tracking-widest">Query</span>
+              <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-transparent to-transparent opacity-80" />
+              <div className="absolute bottom-8 left-8 right-8 p-8 rounded-3xl bg-neutral-900/90 backdrop-blur-2xl border border-white/10 shadow-3xl">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-2.5 h-2.5 rounded-full bg-violet-500 shadow-[0_0_10px_rgba(139,92,246,0.5)]" />
+                  <span className="text-xs text-violet-400 font-black uppercase tracking-[0.3em]">AI Tutor Insight</span>
                 </div>
-                <p className="text-sm font-medium text-white italic leading-relaxed">
+                <p className="text-lg font-bold text-white italic leading-relaxed">
                   "Explain the concept of Neural Networks like I'm 10."
                 </p>
-                <div className="mt-4 pt-4 border-t border-white/5 flex items-center gap-2">
+                <div className="mt-6 pt-6 border-t border-white/5 flex items-center gap-3">
                   <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest">AI Generating Answer...</span>
+                  <span className="text-[10px] text-emerald-400 font-black uppercase tracking-[0.4em]">Optimizing Response...</span>
                 </div>
               </div>
             </motion.div>
@@ -238,13 +325,20 @@ export default function App() {
         </section>
 
         {/* Footer */}
-        <footer className="max-w-7xl mx-auto px-6 py-12 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6 text-center md:text-left">
-          <div className="flex items-center gap-2">
-            <BrainCircuit className="w-5 h-5 text-violet-400" />
-            <span className="font-bold text-white tracking-tight">Study Companion</span>
+        <footer className="max-w-7xl mx-auto px-6 py-16 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-8">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center">
+              <BrainCircuit className="w-5 h-5 text-white" />
+            </div>
+            <span className="font-bold text-white tracking-tight">StudyCompanion</span>
           </div>
-          <p className="text-neutral-500 text-sm">
-            © {new Date().getFullYear()} AI Study Companion. Built for the future of learning.
+          <div className="flex items-center gap-8 text-sm font-bold text-neutral-500">
+            <a href="#" className="hover:text-white transition-colors">Privacy</a>
+            <a href="#" className="hover:text-white transition-colors">Terms</a>
+            <a href="#" className="hover:text-white transition-colors">Twitter</a>
+          </div>
+          <p className="text-neutral-600 text-xs font-medium">
+            © {new Date().getFullYear()} StudyCompanion AI.
           </p>
         </footer>
       </div>

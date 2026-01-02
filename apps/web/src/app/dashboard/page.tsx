@@ -38,6 +38,9 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const router = useRouter();
+  const [questions, setQuestions] = useState<Record<string, string>>({});
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [askingId, setAskingId] = useState<string | null>(null);
 
   const limit = 5;
 
@@ -47,18 +50,21 @@ export default function DashboardPage() {
     fetch(
       `${
         process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000"
-      }/notes?search=${encodeURIComponent(search)}&page=${page}&limit=${limit}`,
+      }/notes?search=${encodeURIComponent(
+        debouncedSearch
+      )}&page=${page}&limit=${limit}`,
       { credentials: "include" }
     )
       .then((res) => {
         if (res.status === 401) {
-          router.push('/login')
-          return;
+          router.push("/login");
+          return null;
         }
         return res.json();
       })
       .then((data) => {
         // Handle potential undefined notes from backend bug
+        if (!data) return;
         setNotes(data.notes || []);
         setTotal(data.total || 0);
       })
@@ -112,7 +118,7 @@ export default function DashboardPage() {
               Manage and summarize your study materials.
             </p>
           </div>
-          <button className="flex items-center gap-2 bg-violet-600 hover:bg-violet-500 text-white px-5 py-2.5 rounded-xl font-semibold transition-all shadow-lg shadow-violet-900/20 active:scale-95">
+          <button className="flex items-center gap-2 bg-violet-600 hover:bg-violet-500 text-white px-5 py-2.5 rounded-xl font-semibold transition-all shadow-lg shadow-violet-900/20 active:scale-95" onClick={() => router.push('/notes/new')}>
             <Plus className="w-5 h-5" />
             New Note
           </button>
@@ -148,7 +154,6 @@ export default function DashboardPage() {
               {Array.from({ length: 5 }).map((_, i) => (
                 <NoteSkeleton key={i} />
               ))}
-              
             </div>
           ) : notes.length > 0 ? (
             <AnimatePresence mode="popLayout">
@@ -220,6 +225,71 @@ export default function DashboardPage() {
                         </p>
                       </motion.div>
                     )}
+                    <div className="mt-4 space-y-2">
+                      <input
+                        type="text"
+                        placeholder="Ask AI Tutor (e.g. Explain this like I'm 10)"
+                        value={questions[note.id] || ""}
+                        onChange={(e) =>
+                          setQuestions((prev) => ({
+                            ...prev,
+                            [note.id]: e.target.value,
+                          }))
+                        }
+                        className="w-full bg-neutral-900 border border-white/10 rounded-lg p-2 text-sm"
+                      />
+
+                      <button
+                        disabled={askingId === note.id}
+                        onClick={async () => {
+                          const question = questions[note.id];
+                          if (!question || question.trim().length < 5) return;
+
+                          setAskingId(note.id);
+
+                          try {
+                            const res = await fetch(
+                              `${
+                                process.env.NEXT_PUBLIC_BACKEND_URL ||
+                                "http://localhost:5000"
+                              }/notes/tutor`,
+                              {
+                                method: "POST",
+                                credentials: "include",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                  noteId: note.id,
+                                  question,
+                                }),
+                              }
+                            );
+
+                            const data = await res.json();
+
+                            if (res.ok) {
+                              setAnswers((prev) => ({
+                                ...prev,
+                                [note.id]: data.answer,
+                              }));
+                            }
+                          } catch (err) {
+                            console.error("Tutor error:", err);
+                          } finally {
+                            setAskingId(null);
+                          }
+                        }}
+                        className="text-xs px-3 py-1 bg-violet-600 rounded"
+                      >
+                        {askingId === note.id ? "Thinking..." : "Ask Tutor"}
+                      </button>
+
+                      {answers[note.id] && (
+                        <div className="bg-emerald-500/5 border border-emerald-500/10 p-3 rounded text-sm">
+                          <strong>AI Tutor:</strong>
+                          <p>{answers[note.id]}</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </motion.div>
               ))}
