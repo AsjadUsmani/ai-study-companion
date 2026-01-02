@@ -14,6 +14,10 @@ import {
   Clock,
   LayoutGrid,
 } from "lucide-react";
+import { useDebounce } from "@/hooks/useDebounce";
+import NoteSkeleton from "@/components/NoteSkeleton";
+import Toast from "@/components/Toast";
+import { useRouter } from "next/navigation";
 
 type Note = {
   id: string;
@@ -26,23 +30,33 @@ type Note = {
 export default function DashboardPage() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 400);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [summarizingId, setSummarizingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+  const router = useRouter();
 
   const limit = 5;
 
   useEffect(() => {
     setLoading(true);
+    setError(null);
     fetch(
       `${
         process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000"
-      }/notes?search=${search}&page=${page}&limit=${limit}`,
+      }/notes?search=${encodeURIComponent(search)}&page=${page}&limit=${limit}`,
       { credentials: "include" }
     )
-      .then((res) => res.json())
+      .then((res) => {
+        if (res.status === 401) {
+          router.push('/login')
+          return;
+        }
+        return res.json();
+      })
       .then((data) => {
         // Handle potential undefined notes from backend bug
         setNotes(data.notes || []);
@@ -50,7 +64,7 @@ export default function DashboardPage() {
       })
       .catch(() => setError("Failed to load notes"))
       .finally(() => setLoading(false));
-  }, [search, page]);
+  }, [debouncedSearch, page]);
 
   const handleSummarize = async (noteId: string) => {
     setSummarizingId(noteId);
@@ -73,6 +87,8 @@ export default function DashboardPage() {
             n.id === noteId ? { ...n, summary: data.summary } : n
           )
         );
+        setToast("Summary generated successfully");
+        setTimeout(() => setToast(null), 3000);
       }
     } catch (err) {
       console.error("Summarize error:", err);
@@ -128,11 +144,15 @@ export default function DashboardPage() {
         <div className="space-y-4 relative min-h-100">
           {error && <div className="text-red-400 text-sm">{error}</div>}
           {loading ? (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <Loader2 className="w-10 h-10 text-violet-500 animate-spin" />
+            <div className="space-y-4">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <NoteSkeleton key={i} />
+              ))}
+              
             </div>
           ) : notes.length > 0 ? (
             <AnimatePresence mode="popLayout">
+              {toast && <Toast message={toast} />}
               {notes.map((note) => (
                 <motion.div
                   key={note.id}

@@ -244,7 +244,7 @@ export default function App() {
             <span className="font-bold text-white tracking-tight">Study Companion</span>
           </div>
           <p className="text-neutral-500 text-sm">
-            © 2024 AI Study Companion. Built for the future of learning.
+            © {new Date().getFullYear()} AI Study Companion. Built for the future of learning.
           </p>
         </footer>
       </div>
