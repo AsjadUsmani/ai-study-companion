@@ -27,6 +27,16 @@ type Note = {
   created_at: string;
 };
 
+/**
+ * Renders the dashboard UI for viewing, searching, paginating, and summarizing notes.
+ *
+ * The component fetches paginated notes from the backend (with a debounced search query),
+ * handles authentication redirect to `/login` on HTTP 401, displays loading skeletons,
+ * shows errors and a temporary toast on successful summary generation, and lets users
+ * request an AI-generated summary for an individual note which updates that note in state.
+ *
+ * @returns A React element that renders the notes library dashboard.
+ */
 export default function DashboardPage() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [search, setSearch] = useState("");
