@@ -47,18 +47,19 @@ export default function DashboardPage() {
     fetch(
       `${
         process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000"
-      }/notes?search=${encodeURIComponent(search)}&page=${page}&limit=${limit}`,
+      }/notes?search=${encodeURIComponent(debouncedSearch)}&page=${page}&limit=${limit}`,
       { credentials: "include" }
     )
       .then((res) => {
         if (res.status === 401) {
           router.push('/login')
-          return;
+          return null;
         }
         return res.json();
       })
       .then((data) => {
         // Handle potential undefined notes from backend bug
+        if(!data) return;
         setNotes(data.notes || []);
         setTotal(data.total || 0);
       })
