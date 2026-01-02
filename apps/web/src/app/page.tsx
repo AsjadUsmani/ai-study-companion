@@ -19,6 +19,13 @@ import {
 import { useRouter } from "next/navigation";
 
 
+/**
+ * Client-side homepage component that renders the StudyCompanion landing experience with auth-aware navigation, hero, feature grid, "Why Us" section, and footer.
+ *
+ * The component checks authentication on mount, updates UI based on the current user state (loading, authenticated, unauthenticated), and exposes a logout action that clears the user and refreshes routing.
+ *
+ * @returns The React element for the landing page with interactive navigation, animated feature cards, and responsive layout.
+ */
 export default function App() {
   const router = useRouter();
   const [user, setUser] = useState<{ id: string; email: string } | null>(null);

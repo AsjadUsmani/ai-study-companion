@@ -27,6 +27,13 @@ type Note = {
   created_at: string;
 };
 
+/**
+ * Render the dashboard UI for browsing, searching, summarizing, and tutoring on notes.
+ *
+ * Displays a paginated list of notes with search, per-note AI summarization, and a per-note AI tutor (question input and answer display). Handles loading and error states, shows total note count, and provides navigation to create a new note.
+ *
+ * @returns The Dashboard page component rendering the notes library with search, pagination, AI summarization, and per-note AI tutor features.
+ */
 export default function DashboardPage() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [search, setSearch] = useState("");
