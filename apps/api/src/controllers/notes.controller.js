@@ -112,3 +112,34 @@ export const summarizeNote = async (req, res) => {
     res.status(500).json({ error: "Failed to summarize note" });
   }
 };
+
+export const tutorNote = async (req, res) => {
+  try {
+    const { noteId, question } = req.body;
+    const userId = req.user.id;
+
+    if (!question || question.trim().length < 5) {
+      return res.status(400).json({ error: "Question is too short" });
+    }
+
+    const noteRes = await pool.query(
+      "SELECT content FROM notes WHERE id = $1 AND user_id = $2",
+      [noteId, userId]
+    );
+
+    if (noteRes.rows.length === 0) {
+      return res.status(404).json({ error: "Note not found" });
+    }
+
+    const noteContent = noteRes.rows[0].content;
+
+    const aiRes = await aiClient.post("/tutor", {
+      note: noteContent,
+      question,
+    });
+
+    return res.json({ answer: aiRes.data.answer });
+  } catch (error) {
+    res.status(500).json({ error: "Tutor mode failed" });
+  }
+};
