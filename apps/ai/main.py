@@ -15,6 +15,18 @@ def health():
 
 @app.post("/summarize")
 def summarize(input: TextInput):
+    """
+    Produce a concise summary of the provided text.
+    
+    Parameters:
+        input (TextInput): Object containing the text to summarize. The text is stripped of leading and trailing whitespace; if the resulting text has fewer than 50 characters, it is returned unchanged.
+    
+    Returns:
+        dict: A mapping with key `"summary"` whose value is the summarized text string.
+    
+    Raises:
+        HTTPException: with status code 500 if the AI summarization call fails.
+    """
     text = input.text.strip()
 
     if len(text) < 50:
@@ -36,6 +48,21 @@ def summarize(input: TextInput):
     
 @app.post("/tutor")
 def tutor(input: dict):
+    """
+    Generate an answer to a question using the provided note as source material.
+    
+    Parameters:
+        input (dict): Input dictionary with keys:
+            - "note" (str): Source material to use for answering; must be at least 20 characters.
+            - "question" (str): Question to answer based on the note; must be at least 5 characters.
+    
+    Returns:
+        dict: A dictionary with a single key "answer" whose value is the generated answer text,
+        or a validation message when input lengths are insufficient.
+    
+    Raises:
+        HTTPException: Raised with status code 500 and detail "Tutor AI failed" if the AI generation fails.
+    """
     note = input.get("note", "").strip()
     question = input.get("question", "").strip()
 

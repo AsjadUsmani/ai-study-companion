@@ -21,6 +21,15 @@ type CreateNotePayload = {
   content: string;
 };
 
+/**
+ * Renders the "Create New Entry" page with an editor UI for composing and saving a note.
+ *
+ * The component manages local form state (title and content), validation, a loading indicator,
+ * and error messaging. Submitting the form sends the note to the configured backend and,
+ * on success, navigates to the dashboard.
+ *
+ * @returns The React element for the note creation UI, including inputs for title and content, an error banner, word count, and actions to discard or save the note.
+ */
 export default function NewNotePage() {
   const router = useRouter();
   const [form, setForm] = useState<CreateNotePayload>({
