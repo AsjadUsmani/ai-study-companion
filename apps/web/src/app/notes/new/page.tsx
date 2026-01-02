@@ -2,15 +2,15 @@
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  ArrowLeft, 
-  Sparkles, 
-  Loader2, 
-  Type, 
-  AlignLeft, 
-  Save, 
+import {
+  ArrowLeft,
+  Sparkles,
+  Loader2,
+  Type,
+  AlignLeft,
+  Save,
   XCircle,
-  AlertCircle
+  AlertCircle,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -41,7 +41,9 @@ export default function NewNotePage() {
 
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000"}/notes`,
+        `${
+          process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000"
+        }/notes`,
         {
           method: "POST",
           credentials: "include",
@@ -49,10 +51,20 @@ export default function NewNotePage() {
           body: JSON.stringify(form),
         }
       );
-      if (!res.ok) throw new Error("Failed to create note");
+      if (res.status === 401) {
+        router.push("/login");
+        return;
+      }
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to create note");
+      }
       router.push("/dashboard");
-    } catch (err) {
-      setError("We couldn't save your note. Please check your connection and try again.");
+    } catch (err: any) {
+      setError(
+        err.message ||
+          "We couldn't save your note. Please check your connection and try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -77,7 +89,9 @@ export default function NewNotePage() {
           <div className="p-2 rounded-full group-hover:bg-white/5 transition-colors">
             <ArrowLeft className="w-5 h-5" />
           </div>
-          <span className="font-semibold tracking-wide uppercase text-xs">Back to Library</span>
+          <span className="font-semibold tracking-wide uppercase text-xs">
+            Back to Library
+          </span>
         </motion.button>
 
         {/* Main Form Card */}
@@ -93,9 +107,13 @@ export default function NewNotePage() {
                 <div className="p-2 bg-violet-500/10 rounded-xl">
                   <Sparkles className="w-5 h-5 text-violet-400" />
                 </div>
-                <span className="text-xs font-black text-violet-400 uppercase tracking-[0.3em]">Editor</span>
+                <span className="text-xs font-black text-violet-400 uppercase tracking-[0.3em]">
+                  Editor
+                </span>
               </div>
-              <h1 className="text-4xl font-black text-white tracking-tight">Create New Entry</h1>
+              <h1 className="text-4xl font-black text-white tracking-tight">
+                Create New Entry
+              </h1>
             </div>
 
             {/* Error Message */}
@@ -145,7 +163,9 @@ export default function NewNotePage() {
                   placeholder="Start typing your thoughts, research, or study notes..."
                   rows={12}
                   value={form.content}
-                  onChange={(e) => setForm({ ...form, content: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, content: e.target.value })
+                  }
                   className="w-full bg-neutral-950/50 border border-white/5 group-focus-within:border-violet-500/50 rounded-[2rem] py-6 px-6 text-lg text-neutral-300 leading-relaxed placeholder:text-neutral-700 focus:outline-none focus:ring-4 focus:ring-violet-500/5 transition-all resize-none"
                 />
               </div>
@@ -154,9 +174,10 @@ export default function NewNotePage() {
             {/* Action Bar */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-6 pt-4 border-t border-white/5">
               <p className="text-sm text-neutral-500 font-medium italic">
-                {form.content.trim().split(/\s+/).filter(Boolean).length} words typed
+                {form.content.trim().split(/\s+/).filter(Boolean).length} words
+                typed
               </p>
-              
+
               <div className="flex items-center gap-4 w-full sm:w-auto">
                 <button
                   onClick={() => router.push("/dashboard")}

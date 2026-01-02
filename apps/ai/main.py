@@ -9,6 +9,10 @@ app = FastAPI()
 class TextInput(BaseModel):
     text: str
 
+class TutorInput(BaseModel):
+    note: str
+    question: str
+
 @app.get('/health')
 def health():
     return {"status": "AI service running"}
@@ -35,12 +39,12 @@ def summarize(input: TextInput):
         raise HTTPException(status_code=500, detail="AI summarization failed")
     
 @app.post("/tutor")
-def tutor(input: dict):
-    note = input.get("note", "").strip()
-    question = input.get("question", "").strip()
+def tutor(input: TutorInput):
+    note = input.note.strip()
+    question = input.question.strip()
 
     if len(note) < 20 or len(question) < 5:
-        return {"answer": "Please provide a valid note and question."}
+        raise HTTPException(status_code=400, detail="Please provide a valid note and question.")
     try:
         prompt = tutor_prompt(note, question)
         response = client.models.generate_content(
