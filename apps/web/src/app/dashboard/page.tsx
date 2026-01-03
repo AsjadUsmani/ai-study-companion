@@ -18,49 +18,11 @@ import {
   X
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useDebounce } from "@/hooks/useDebounce";
+import Toast from "@/components/Toast";
+import NoteSkeleton from "@/components/NoteSkeleton";
 
 // --- Internal Utilities & Components (maintained for preview functionality) ---
-
-function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value);
-  useEffect(() => {
-    const handler = setTimeout(() => setDebouncedValue(value), delay);
-    return () => clearTimeout(handler);
-  }, [value, delay]);
-  return debouncedValue;
-}
-
-const Toast = ({ message, type = "success" }: { message: string, type?: "success" | "error" }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 50 }}
-    animate={{ opacity: 1, y: 0 }}
-    exit={{ opacity: 0, scale: 0.9 }}
-    className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-neutral-900 border border-white/10 px-4 py-3 rounded-2xl shadow-2xl"
-  >
-    {type === "success" ? (
-      <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-    ) : (
-      <AlertCircle className="w-5 h-5 text-red-400" />
-    )}
-    <span className="text-sm font-medium text-white">{message}</span>
-  </motion.div>
-);
-
-const NoteSkeleton = () => (
-  <div className="bg-neutral-900/40 border border-white/5 rounded-2xl p-6 animate-pulse space-y-4">
-    <div className="flex justify-between items-start">
-      <div className="space-y-2 w-1/2">
-        <div className="h-6 bg-white/5 rounded w-3/4" />
-        <div className="h-3 bg-white/5 rounded w-1/2" />
-      </div>
-      <div className="h-8 bg-white/5 rounded w-24" />
-    </div>
-    <div className="space-y-2">
-      <div className="h-4 bg-white/5 rounded w-full" />
-      <div className="h-4 bg-white/5 rounded w-5/6" />
-    </div>
-  </div>
-);
 
 type Note = {
   id: string;
@@ -83,7 +45,6 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [summarizingId, setSummarizingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   // AI Tutor & Quiz State
   const [questions, setQuestions] = useState<Record<string, string>>({});
@@ -94,10 +55,6 @@ export default function App() {
   const router = useRouter();
   const limit = 5;
 
-  const showToast = (message: string, type: "success" | "error" = "success") => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
-  };
 
   // Mock router for preview
   
@@ -148,10 +105,10 @@ export default function App() {
             n.id === noteId ? { ...n, summary: data.summary } : n
           )
         );
-        showToast("Summary generated successfully");
+        Toast({message: "Summary generated successfully"});
       }
     } catch (err) {
-      showToast("Summarize error", "error");
+      Toast({message: "Summarize error"});
     } finally {
       setSummarizingId(null);
     }
@@ -220,7 +177,6 @@ export default function App() {
             </div>
           ) : notes.length > 0 ? (
             <AnimatePresence mode="popLayout">
-              {toast && <Toast message={toast.message} type={toast.type} />}
               {notes.map((note) => (
                 <motion.div
                   key={note.id}
@@ -285,7 +241,7 @@ export default function App() {
                               setQuiz((prev) => ({ ...prev, [note.id]: data.questions }));
                             } catch (error) {
                               console.error(error);
-                              showToast("Failed to generate quiz", "error");
+                              Toast({message: "Failed to generate quiz"});
                             } finally {
                               setQuizLoadingId(null);
                             }
