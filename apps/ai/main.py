@@ -4,8 +4,10 @@ from prompts import summarize_prompt, tutor_prompt, quiz_prompt
 from gemini_client import client
 from google.genai import types
 import json
+import logging
 
 app = FastAPI()
+logger = logging.getLogger(__name__)
 
 class TextInput(BaseModel):
     text: str
@@ -77,11 +79,14 @@ def quiz(input: dict):
             ),
             contents=f"Generate a quiz based on this study material:\n{note}"
         )
+        
+        if not response.text:
+            raise HTTPException(status_code=500, detail="AI returned empty response")
 
         return json.loads(response.text)
 
-    except json.JSONDecodeError:
-        raise HTTPException(status_code=500, detail="AI returned invalid JSON format")
+    except json.JSONDecodeError as e:
+        raise HTTPException(status_code=500, detail="AI returned invalid JSON format") from e
     except Exception as e:
-        print("Quiz error:", e)
-        raise HTTPException(status_code=500, detail="Quiz generation failed")
+        logger.exception("Quiz generation error")
+        raise HTTPException(status_code=500, detail="Quiz generation failed") from e

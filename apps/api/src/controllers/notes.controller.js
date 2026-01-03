@@ -63,6 +63,27 @@ export const getNotes = async (req, res) => {
   }
 };
 
+export const getSingleNote = async (req, res) => {
+  const userId = req.user.id;
+  const noteId = req.params.id;
+
+  const result = await pool.query(
+    `
+    SELECT id, title, content, created_at
+    FROM notes
+    WHERE id = $1 AND user_id = $2
+    `,
+    [noteId, userId]
+  );
+
+  if (result.rows.length === 0) {
+    return res.status(404).json({ error: "Note not found" });
+  }
+
+  res.json(result.rows[0]);
+};
+
+
 export const summarizeNote = async (req, res) => {
   try {
     const { noteId } = req.body;
@@ -168,3 +189,45 @@ export const generateQuiz = async (req, res) => {
     res.status(500).json({ error: "Failed to generate quiz" })
   }
 }
+
+export const updateNote = async (req, res) => {
+  const userId = req.user.id;
+  const noteId = req.params.id;
+  const { title, content } = req.body;
+
+  if (!title?.trim() || !content?.trim()) {
+    return res.status(400).json({ error: "Title and content are required" });
+  }
+
+  const result = await pool.query(
+    `
+    UPDATE notes
+    SET title = $1, content = $2
+    WHERE id = $3 AND user_id = $4
+    RETURNING id
+    `,
+    [title, content, noteId, userId]
+  );
+
+  if (result.rowCount === 0) {
+    return res.status(404).json({ error: "Note not found" });
+  }
+
+  res.json({ success: true });
+};
+
+export const deleteNote = async (req, res) => {
+  const userId = req.user.id;
+  const noteId = req.params.id;
+
+  const result = await pool.query(
+    "DELETE FROM notes WHERE id = $1 AND user_id = $2",
+    [noteId, userId]
+  );
+
+  if (result.rowCount === 0) {
+    return res.status(404).json({ error: "Note not found" });
+  }
+
+  res.json({ success: true });
+};

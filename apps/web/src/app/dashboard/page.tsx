@@ -12,55 +12,15 @@ import {
   Loader2,
   BookOpen,
   Clock,
-  LayoutGrid,
   AlertCircle,
-  CheckCircle2,
-  X
+  X,
+  PenLine,
+  Trash2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-
-// --- Internal Utilities & Components (maintained for preview functionality) ---
-
-function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value);
-  useEffect(() => {
-    const handler = setTimeout(() => setDebouncedValue(value), delay);
-    return () => clearTimeout(handler);
-  }, [value, delay]);
-  return debouncedValue;
-}
-
-const Toast = ({ message, type = "success" }: { message: string, type?: "success" | "error" }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 50 }}
-    animate={{ opacity: 1, y: 0 }}
-    exit={{ opacity: 0, scale: 0.9 }}
-    className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-neutral-900 border border-white/10 px-4 py-3 rounded-2xl shadow-2xl"
-  >
-    {type === "success" ? (
-      <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-    ) : (
-      <AlertCircle className="w-5 h-5 text-red-400" />
-    )}
-    <span className="text-sm font-medium text-white">{message}</span>
-  </motion.div>
-);
-
-const NoteSkeleton = () => (
-  <div className="bg-neutral-900/40 border border-white/5 rounded-2xl p-6 animate-pulse space-y-4">
-    <div className="flex justify-between items-start">
-      <div className="space-y-2 w-1/2">
-        <div className="h-6 bg-white/5 rounded w-3/4" />
-        <div className="h-3 bg-white/5 rounded w-1/2" />
-      </div>
-      <div className="h-8 bg-white/5 rounded w-24" />
-    </div>
-    <div className="space-y-2">
-      <div className="h-4 bg-white/5 rounded w-full" />
-      <div className="h-4 bg-white/5 rounded w-5/6" />
-    </div>
-  </div>
-);
+import { useDebounce } from "@/hooks/useDebounce";
+import Toast from "@/components/Toast";
+import NoteSkeleton from "@/components/NoteSkeleton";
 
 type Note = {
   id: string;
@@ -70,9 +30,10 @@ type Note = {
   created_at: string;
 };
 
-const BACKEND_URL = typeof window !== 'undefined' 
-  ? (process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000")
-  : "";
+const BACKEND_URL =
+  typeof window !== "undefined"
+    ? process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000"
+    : "";
 
 export default function App() {
   const [notes, setNotes] = useState<Note[]>([]);
@@ -83,7 +44,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [summarizingId, setSummarizingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // AI Tutor & Quiz State
   const [questions, setQuestions] = useState<Record<string, string>>({});
@@ -93,14 +54,6 @@ export default function App() {
   const [quizLoadingId, setQuizLoadingId] = useState<string | null>(null);
   const router = useRouter();
   const limit = 5;
-
-  const showToast = (message: string, type: "success" | "error" = "success") => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
-  };
-
-  // Mock router for preview
-  
 
   useEffect(() => {
     const fetchNotes = async () => {
@@ -113,7 +66,7 @@ export default function App() {
           )}&page=${page}&limit=${limit}`,
           { credentials: "include" }
         );
-        
+
         if (res.status === 401) {
           setError("Session expired. Please login.");
           return;
@@ -148,12 +101,38 @@ export default function App() {
             n.id === noteId ? { ...n, summary: data.summary } : n
           )
         );
-        showToast("Summary generated successfully");
+        Toast({ message: "Summary generated successfully" });
       }
     } catch (err) {
-      showToast("Summarize error", "error");
+      Toast({ message: "Summarize error" });
     } finally {
       setSummarizingId(null);
+    }
+  };
+
+  const handleDelete = async (noteId: string) => {
+    if (!confirm("Are you sure you want to delete this note? This action cannot be undone.")) {
+      return;
+    }
+
+    setDeletingId(noteId);
+    try {
+      const res = await fetch(`${BACKEND_URL}/notes/${noteId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (res.ok) {
+        setNotes((prev) => prev.filter((n) => n.id !== noteId));
+        setTotal((prev) => prev - 1);
+        Toast({ message: "Note deleted successfully" });
+      } else {
+        Toast({ message: "Failed to delete note" });
+      }
+    } catch (err) {
+      Toast({ message: "Failed to delete note" });
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -211,7 +190,7 @@ export default function App() {
               <span className="text-sm font-medium">{error}</span>
             </div>
           )}
-          
+
           {loading ? (
             <div className="space-y-4">
               {Array.from({ length: 3 }).map((_, i) => (
@@ -220,7 +199,6 @@ export default function App() {
             </div>
           ) : notes.length > 0 ? (
             <AnimatePresence mode="popLayout">
-              {toast && <Toast message={toast.message} type={toast.type} />}
               {notes.map((note) => (
                 <motion.div
                   key={note.id}
@@ -248,7 +226,7 @@ export default function App() {
                           </span>
                         </div>
                       </div>
-                      
+
                       {/* Action Buttons */}
                       <div className="flex flex-wrap items-center gap-2">
                         <button
@@ -274,25 +252,37 @@ export default function App() {
                           onClick={async () => {
                             setQuizLoadingId(note.id);
                             try {
-                              const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000"}/notes/quiz`, {
-                                method: "POST",
-                                credentials: "include",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({ noteId: note.id }),
-                              });
+                              const res = await fetch(
+                                `${BACKEND_URL}/notes/quiz`,
+                                {
+                                  method: "POST",
+                                  credentials: "include",
+                                  headers: {
+                                    "Content-Type": "application/json",
+                                  },
+                                  body: JSON.stringify({ noteId: note.id }),
+                                }
+                              );
 
                               const data = await res.json();
-                              setQuiz((prev) => ({ ...prev, [note.id]: data.questions }));
+                              setQuiz((prev) => ({
+                                ...prev,
+                                [note.id]: data.questions,
+                              }));
                             } catch (error) {
                               console.error(error);
-                              showToast("Failed to generate quiz", "error");
+                              Toast({ message: "Failed to generate quiz" });
                             } finally {
                               setQuizLoadingId(null);
                             }
                           }}
-                          className="text-xs px-3 py-1 bg-indigo-600 rounded text-white font-bold"
+                          className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500/20"
                         >
-                          {quizLoadingId === note.id ? "Generating..." : "Generate Quiz"}
+                          {quizLoadingId === note.id ? (
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                          ) : (
+                            "Generate Quiz"
+                          )}
                         </button>
                       </div>
                     </div>
@@ -320,24 +310,47 @@ export default function App() {
                       </motion.div>
                     )}
 
-                    {/* Quiz Section - Simplified Render */}
+                    {/* Quiz Section */}
                     {quiz[note.id] && (
                       <div className="mt-4 space-y-3">
                         <div className="flex justify-between items-center">
-                          <h4 className="text-xs font-bold text-indigo-400 uppercase">Practice Quiz</h4>
-                          <button onClick={() => setQuiz(prev => { const n = {...prev}; delete n[note.id]; return n; })}><X className="w-3 h-3 text-neutral-500 hover:text-white" /></button>
+                          <h4 className="text-xs font-bold text-indigo-400 uppercase">
+                            Practice Quiz
+                          </h4>
+                          <button
+                            onClick={() =>
+                              setQuiz((prev) => {
+                                const n = { ...prev };
+                                delete n[note.id];
+                                return n;
+                              })
+                            }
+                          >
+                            <X className="w-3 h-3 text-neutral-500 hover:text-white" />
+                          </button>
                         </div>
                         {quiz[note.id].map((q, i) => (
-                          <div key={i} className="bg-neutral-800 p-3 rounded text-sm">
+                          <div
+                            key={i}
+                            className="bg-neutral-800 p-3 rounded text-sm"
+                          >
                             {q.type === "qa" ? (
                               <>
-                                <p><strong>Q:</strong> {q.question}</p>
-                                <p className="text-neutral-400 mt-1"><strong>A:</strong> {q.answer}</p>
+                                <p>
+                                  <strong>Q:</strong> {q.question}
+                                </p>
+                                <p className="text-neutral-400 mt-1">
+                                  <strong>A:</strong> {q.answer}
+                                </p>
                               </>
                             ) : (
                               <>
-                                <p><strong>Front:</strong> {q.front}</p>
-                                <p className="text-neutral-400 mt-1"><strong>Back:</strong> {q.back}</p>
+                                <p>
+                                  <strong>Front:</strong> {q.front}
+                                </p>
+                                <p className="text-neutral-400 mt-1">
+                                  <strong>Back:</strong> {q.back}
+                                </p>
                               </>
                             )}
                           </div>
@@ -345,7 +358,7 @@ export default function App() {
                       </div>
                     )}
 
-                    {/* Tutor Chat Input - Simplified */}
+                    {/* Tutor Chat Input */}
                     <div className="mt-6 pt-6 border-t border-white/5 space-y-4">
                       <div className="flex items-center gap-3">
                         <input
@@ -368,15 +381,20 @@ export default function App() {
 
                             setAskingId(note.id);
                             try {
-                              const res = await fetch(`${BACKEND_URL}/notes/tutor`, {
-                                method: "POST",
-                                credentials: "include",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({
-                                  noteId: note.id,
-                                  question,
-                                }),
-                              });
+                              const res = await fetch(
+                                `${BACKEND_URL}/notes/tutor`,
+                                {
+                                  method: "POST",
+                                  credentials: "include",
+                                  headers: {
+                                    "Content-Type": "application/json",
+                                  },
+                                  body: JSON.stringify({
+                                    noteId: note.id,
+                                    question,
+                                  }),
+                                }
+                              );
                               const data = await res.json();
                               if (res.ok) {
                                 setAnswers((prev) => ({
@@ -398,10 +416,40 @@ export default function App() {
 
                       {answers[note.id] && (
                         <div className="bg-emerald-500/5 border border-emerald-500/10 p-3 rounded text-sm">
-                          <strong className="block text-emerald-400 mb-1">AI Tutor:</strong>
+                          <strong className="block text-emerald-400 mb-1">
+                            AI Tutor:
+                          </strong>
                           <p className="text-neutral-300">{answers[note.id]}</p>
                         </div>
                       )}
+                    </div>
+
+                    {/* Edit & Delete Buttons */}
+                    <div className="flex items-center gap-3 pt-4 border-t border-white/5">
+                      <button
+                        onClick={() => router.push(`/notes/${note.id}/edit`)}
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-neutral-800/50 border border-white/5 text-neutral-400 hover:text-white hover:bg-neutral-800 hover:border-white/10 transition-all group"
+                        title="Edit Note"
+                      >
+                        <PenLine className="w-4 h-4 group-hover:text-violet-400 transition-colors" />
+                        <span className="text-xs font-bold uppercase tracking-wider">Edit</span>
+                      </button>
+                      
+                      <button
+                        onClick={() => handleDelete(note.id)}
+                        disabled={deletingId === note.id}
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500/5 border border-red-500/20 text-red-400 hover:text-red-300 hover:bg-red-500/10 hover:border-red-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
+                        title="Delete Note"
+                      >
+                        {deletingId === note.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-4 h-4 group-hover:text-red-300 transition-colors" />
+                        )}
+                        <span className="text-xs font-bold uppercase tracking-wider">
+                          {deletingId === note.id ? "Deleting..." : "Delete"}
+                        </span>
+                      </button>
                     </div>
                   </div>
                 </motion.div>
