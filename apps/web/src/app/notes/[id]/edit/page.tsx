@@ -60,7 +60,7 @@ export default function EditNotePage() {
       })
       .catch(() => setError("Failed to load note. Please try again."))
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, router, BACKEND_URL]);
 
   const handleSave = async () => {
     if (!form.title.trim() || !form.content.trim()) {
@@ -107,6 +107,11 @@ export default function EditNotePage() {
         method: "DELETE",
         credentials: "include",
       });
+
+      if (res.status === 401) {
+        router.push("/login");
+        return;
+      }
 
       if (!res.ok) {
         throw new Error("Failed to delete note");

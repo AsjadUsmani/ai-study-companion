@@ -64,25 +64,26 @@ export const getNotes = async (req, res) => {
 };
 
 export const getSingleNote = async (req, res) => {
-  const userId = req.user.id;
-  const noteId = req.params.id;
-
-  const result = await pool.query(
-    `
-    SELECT id, title, content, created_at
-    FROM notes
-    WHERE id = $1 AND user_id = $2
-    `,
-    [noteId, userId]
-  );
-
-  if (result.rows.length === 0) {
-    return res.status(404).json({ error: "Note not found" });
+  try {
+    const userId = req.user.id;
+    const noteId = req.params.id;
+    const result = await pool.query(
+      `
+      SELECT id, title, content, created_at
+      FROM notes
+      WHERE id = $1 AND user_id = $2
+      `,
+      [noteId, userId]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Note not found" });
+    }
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error(`Error fetching note: ${error}`);
+    res.status(500).json({ error: "Failed to fetch note" });
   }
-
-  res.json(result.rows[0]);
 };
-
 
 export const summarizeNote = async (req, res) => {
   try {
@@ -167,67 +168,73 @@ export const tutorNote = async (req, res) => {
 
 export const generateQuiz = async (req, res) => {
   try {
-    const { noteId } = req.body
-    const userId = req.user.id
+    const { noteId } = req.body;
+    const userId = req.user.id;
 
     const noteRes = await pool.query(
       "SELECT content FROM notes WHERE id = $1 AND user_id = $2",
       [noteId, userId]
-    )
+    );
 
     if (noteRes.rows.length === 0) {
-      return res.status(404).json({ error: "Note not found" })
+      return res.status(404).json({ error: "Note not found" });
     }
 
     const aiRes = await aiClient.post("/quiz", {
       note: noteRes.rows[0].content,
-    })
+    });
 
-    return res.json(aiRes.data)
+    return res.json(aiRes.data);
   } catch (err) {
-    console.error("Quiz error:", err)
-    res.status(500).json({ error: "Failed to generate quiz" })
+    console.error("Quiz error:", err);
+    res.status(500).json({ error: "Failed to generate quiz" });
   }
-}
+};
 
 export const updateNote = async (req, res) => {
-  const userId = req.user.id;
-  const noteId = req.params.id;
-  const { title, content } = req.body;
-
-  if (!title?.trim() || !content?.trim()) {
-    return res.status(400).json({ error: "Title and content are required" });
+  try {
+    const userId = req.user.id;
+    const noteId = req.params.id;
+    const { title, content } = req.body;
+    if (!title?.trim() || !content?.trim()) {
+      return res.status(400).json({ error: "Title and content are required" });
+    }
+    const result = await pool.query(
+      `
+      UPDATE notes
+      SET title = $1, content = $2
+      WHERE id = $3 AND user_id = $4
+      RETURNING id
+      `,
+      [title, content, noteId, userId]
+    );
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: "Note not found" });
+    }
+    res.json({ success: true });
+  } catch (error) {
+    console.error(`Error updating note: ${error}`);
+    res.status(500).json({ error: "Failed to update note" });
   }
-
-  const result = await pool.query(
-    `
-    UPDATE notes
-    SET title = $1, content = $2
-    WHERE id = $3 AND user_id = $4
-    RETURNING id
-    `,
-    [title, content, noteId, userId]
-  );
-
-  if (result.rowCount === 0) {
-    return res.status(404).json({ error: "Note not found" });
-  }
-
-  res.json({ success: true });
 };
 
 export const deleteNote = async (req, res) => {
-  const userId = req.user.id;
-  const noteId = req.params.id;
+  try {
+    const userId = req.user.id;
+    const noteId = req.params.id;
 
-  const result = await pool.query(
-    "DELETE FROM notes WHERE id = $1 AND user_id = $2",
-    [noteId, userId]
-  );
+    const result = await pool.query(
+      "DELETE FROM notes WHERE id = $1 AND user_id = $2",
+      [noteId, userId]
+    );
 
-  if (result.rowCount === 0) {
-    return res.status(404).json({ error: "Note not found" });
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: "Note not found" });
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error(`Error deleting note: ${error}`);
+    res.status(500).json({ error: "Failed to delete note" });
   }
-
-  res.json({ success: true });
 };
