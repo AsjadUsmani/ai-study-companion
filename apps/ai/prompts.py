@@ -10,6 +10,18 @@ You are a study assistant.
 """
 
 def tutor_prompt(note: str, question: str) -> str:
+    """
+    Builds an instruction prompt for an AI tutor that answers a student question using only the provided study material.
+    
+    The returned prompt is a multi-line instruction block containing RULES for the tutor, a STUDY MATERIAL section populated with `note`, a STUDENT QUESTION section populated with `question`, and an ANSWER placeholder.
+    
+    Parameters:
+        note (str): Study material that must be used as the sole source for the answer.
+        question (str): The student's question to be answered using the study material.
+    
+    Returns:
+        str: A multi-line instruction prompt with the study material and question inserted.
+    """
     return f"""
 You are an AI tutor helping a student understand concepts.
 
@@ -34,6 +46,15 @@ ANSWER:
 
 def quiz_prompt(note: str) -> str:
     # We move the data out of the system prompt for better performance
+    """
+    Return a reusable prompt template instructing an AI to generate practice questions from study material.
+    
+    Parameters:
+    	note (str): Study material intended for question generation. (Note: this function returns a static template and does not interpolate or include `note`.)
+    
+    Returns:
+    	str: A multi-line JSON-format prompt template specifying rules (use only given text, generate 5–7 questions, mix `qa` and `flashcard`) and the expected output schema.
+    """
     return """
 You are an AI study assistant. Create practice questions from provided study material.
 

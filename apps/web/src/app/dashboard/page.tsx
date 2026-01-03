@@ -19,7 +19,13 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-// --- Internal Utilities & Components (maintained for preview functionality) ---
+/**
+ * Delays updates to a value until it remains unchanged for a specified interval.
+ *
+ * @param value - The input value to debounce
+ * @param delay - Time in milliseconds to wait after the last change before updating the returned value
+ * @returns The latest `value` after it has remained stable for `delay` milliseconds
+ */
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
@@ -74,6 +80,13 @@ const BACKEND_URL = typeof window !== 'undefined'
   ? (process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000")
   : "";
 
+/**
+ * Renders the main notes library UI with search, pagination, per-note AI features (summarization, quiz generation, and tutor Q&A), and toast notifications.
+ *
+ * This component displays a searchable, paginated list of user notes, provides controls to create a new note, generate AI summaries, produce practice quizzes, and query an AI tutor per note. It also surfaces loading and error states and shows brief toast messages for user feedback.
+ *
+ * @returns The page's JSX element representing the notes library and its interactive controls.
+ */
 export default function App() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [search, setSearch] = useState("");

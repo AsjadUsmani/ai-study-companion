@@ -21,6 +21,13 @@ type CreateNotePayload = {
   content: string;
 };
 
+/**
+ * Render the New Note page which provides an editor for creating and saving notes.
+ *
+ * Manages local title/content state, validates that both fields are provided, sends a POST request to the backend (using NEXT_PUBLIC_BACKEND_URL or http://localhost:5000) with credentials to create the note, redirects to /login on HTTP 401, navigates to /dashboard on successful creation, and displays inline error and loading states.
+ *
+ * @returns The React element for the new-note editor page.
+ */
 export default function NewNotePage() {
   const router = useRouter();
   const [form, setForm] = useState<CreateNotePayload>({

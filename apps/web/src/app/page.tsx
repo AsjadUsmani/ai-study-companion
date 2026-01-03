@@ -18,6 +18,15 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+/**
+ * Root application component that renders the landing page and manages authentication state.
+ *
+ * Renders the public-facing UI (navigation, hero, feature grid, why-us section, and footer)
+ * and performs an authentication check on mount; exposes logout handling and local auth-related state
+ * to control UI elements (loading, logout in progress, and auth errors).
+ *
+ * @returns The root JSX element for the landing page, updated according to authentication state.
+ */
 export default function App() {
   const router = useRouter();
   const [user, setUser] = useState<{ id: string; email: string } | null>(null);
