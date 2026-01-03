@@ -1,8 +1,9 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from prompts import summarize_prompt, tutor_prompt
+from prompts import summarize_prompt, tutor_prompt, quiz_prompt
 from gemini_client import client
 from google.genai import types
+import json
 
 app = FastAPI()
 
@@ -59,3 +60,28 @@ def tutor(input: TutorInput):
         }
     except Exception:
         raise HTTPException(status_code=500, detail="Tutor AI failed")
+
+@app.post("/quiz")
+def quiz(input: dict):
+    note = input.get("note", "").strip()
+
+    if len(note) < 100:
+        return {"questions": []}
+
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            config=types.GenerateContentConfig(
+                system_instruction=quiz_prompt(note),
+                response_mime_type="application/json"
+            ),
+            contents=f"Generate a quiz based on this study material:\n{note}"
+        )
+
+        return json.loads(response.text)
+
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=500, detail="AI returned invalid JSON format")
+    except Exception as e:
+        print("Quiz error:", e)
+        raise HTTPException(status_code=500, detail="Quiz generation failed")

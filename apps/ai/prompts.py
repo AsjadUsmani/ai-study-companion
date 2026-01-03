@@ -31,3 +31,31 @@ STUDENT QUESTION:
 
 ANSWER:
 """
+
+def quiz_prompt(note: str) -> str:
+    # We move the data out of the system prompt for better performance
+    return """
+You are an AI study assistant. Create practice questions from provided study material.
+
+RULES:
+- Use ONLY the given text.
+- Generate 5–7 questions.
+- Mix short-answer (type: "qa") and flashcards (type: "flashcard").
+- Output STRICT JSON only.
+
+FORMAT:
+{
+  "questions": [
+    {
+      "type": "qa",
+      "question": "...",
+      "answer": "..."
+    },
+    {
+      "type": "flashcard",
+      "front": "...",
+      "back": "..."
+    }
+  ]
+}
+"""
