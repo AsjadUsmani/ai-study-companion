@@ -14,13 +14,29 @@ const app = express();
 // Security middlewares
 app.use(helmet());
 app.use(cookieParser())
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://ai-study-companion-iota.vercel.app",
+  process.env.FRONTEND_URL
+];
+
 app.use(
   cors({
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true); // allow non-browser requests
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error(`CORS blocked for origin: ${origin}`));
+    },
     credentials: true,
-    origin: process.env.FRONTEND_URL || "http://localhost:3000",
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
   })
 );
+
 app.use(express.json());
 app.use(express.urlencoded({extended: true}))
 // Rate limiting
