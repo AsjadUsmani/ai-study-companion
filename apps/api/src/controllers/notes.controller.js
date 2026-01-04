@@ -202,7 +202,7 @@ export const updateNote = async (req, res) => {
     const result = await pool.query(
       `
       UPDATE notes
-      SET title = $1, content = $2
+      SET title = $1, content = $2, summary = NULL
       WHERE id = $3 AND user_id = $4
       RETURNING id
       `,

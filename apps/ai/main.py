@@ -74,7 +74,7 @@ def quiz(input: dict):
         response = client.models.generate_content(
             model="gemini-2.5-flash",
             config=types.GenerateContentConfig(
-                system_instruction=quiz_prompt(note),
+                system_instruction=quiz_prompt(),
                 response_mime_type="application/json"
             ),
             contents=f"Generate a quiz based on this study material:\n{note}"
