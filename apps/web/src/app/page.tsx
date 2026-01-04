@@ -138,7 +138,7 @@ export default function App() {
             className="flex items-center gap-3 group cursor-pointer"
             onClick={() => router.push("/")}
           >
-            <div className="w-10 h-10 rounded-xl bg-black flex items-center justify-center shadow-lg shadow-violet-600/20 group-hover:scale-110 transition-transform">
+            <div className="w-10 h-10 rounded-xl bg-[#050505] flex items-center justify-center shadow-lg shadow-violet-600/20 group-hover:scale-110 transition-transform">
               <Logo />
             </div>
             <span className="font-bold text-xl text-white tracking-tighter">
@@ -375,7 +375,7 @@ export default function App() {
         {/* Footer */}
         <footer className="max-w-7xl mx-auto px-6 py-16 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-8">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-black flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-[#050505] flex items-center justify-center">
               <Logo />
             </div>
             <span className="font-bold text-white tracking-tight">

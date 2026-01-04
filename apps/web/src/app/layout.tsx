@@ -30,6 +30,10 @@ export const metadata: Metadata = {
   authors: [{ name: "Asjad Usmani" }],
 };
 
+export const viewport = {
+  themeColor: '#050505',
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -37,18 +41,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <head>
-        <meta name="theme-color" content="#050505" />
-      </head>
       <body
-      style={{
-          margin: 0,
-          fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
-          backgroundColor: '#050505',
-          color: '#e5e5e5',
-          WebkitFontSmoothing: 'antialiased',
-          MozOsxFontSmoothing: 'grayscale',
-        }}
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <main>{children}</main>

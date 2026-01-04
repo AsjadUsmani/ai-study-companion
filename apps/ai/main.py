@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Header
+from fastapi import FastAPI, HTTPException, Header, Depends
 from pydantic import BaseModel
 from prompts import summarize_prompt, tutor_prompt, quiz_prompt
 from gemini_client import client
@@ -21,12 +21,8 @@ def verify_internal_key(x_internal_key: str = Header(...)):
     if x_internal_key != os.getenv("INTERNAL_API_KEY"):
         raise HTTPException(status_code=401)
 
-@app.get('/health')
-def health():
-    return {"status": "AI service running"}
-
 @app.post("/summarize")
-def summarize(input: TextInput):
+def summarize(input: TextInput, _: None = Depends(verify_internal_key)):
     text = input.text.strip()
 
     if len(text) < 50:
@@ -47,7 +43,7 @@ def summarize(input: TextInput):
         raise HTTPException(status_code=500, detail="AI summarization failed")
     
 @app.post("/tutor")
-def tutor(input: TutorInput):
+def tutor(input: TutorInput, _: None = Depends(verify_internal_key)):
     note = input.note.strip()
     question = input.question.strip()
 
@@ -69,7 +65,7 @@ def tutor(input: TutorInput):
         raise HTTPException(status_code=500, detail="Tutor AI failed")
 
 @app.post("/quiz")
-def quiz(input: dict):
+def quiz(input: dict, _: None = Depends(verify_internal_key)):
     note = input.get("note", "").strip()
 
     if len(note) < 100:
