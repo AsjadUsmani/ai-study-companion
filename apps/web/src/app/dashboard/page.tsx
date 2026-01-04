@@ -21,7 +21,6 @@ import { useRouter } from "next/navigation";
 import { useDebounce } from "@/hooks/useDebounce";
 import toast, { Toaster } from "react-hot-toast";
 import NoteSkeleton from "@/components/NoteSkeleton";
-import Navbar from "@/components/Navbar";
 
 type Note = {
   id: string;
@@ -149,7 +148,6 @@ export default function App() {
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-200 p-6 font-sans">
       {/* Toaster Component - Place at root */}
-      <Navbar/>
       <Toaster
         position="top-right"
         toastOptions={{

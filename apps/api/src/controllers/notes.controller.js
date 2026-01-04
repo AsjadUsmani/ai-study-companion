@@ -195,7 +195,7 @@ export const generateQuiz = async (req, res) => {
     console.error("AI ERROR STATUS:", error.response?.status);
   console.error("AI ERROR DATA:", error.response?.data);
   console.error("AI ERROR MESSAGE:", error.message);
-    console.error("Quiz error:", err);
+    console.error("Quiz error:", error);
     res.status(500).json({ error: "Failed to generate quiz" });
   }
 };
