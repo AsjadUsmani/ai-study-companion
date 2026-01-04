@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useDebounce } from "@/hooks/useDebounce";
-import Toast from "@/components/Toast";
+import toast, { Toaster } from "react-hot-toast";
 import NoteSkeleton from "@/components/NoteSkeleton";
 
 type Note = {
@@ -87,6 +87,8 @@ export default function App() {
 
   const handleSummarize = async (noteId: string) => {
     setSummarizingId(noteId);
+    const toastId = toast.loading("Generating AI summary...");
+    
     try {
       const res = await fetch(`${BACKEND_URL}/notes/summarize`, {
         method: "POST",
@@ -95,16 +97,19 @@ export default function App() {
         credentials: "include",
       });
       const data = await res.json();
+      
       if (res.ok) {
         setNotes((prev) =>
           prev.map((n) =>
             n.id === noteId ? { ...n, summary: data.summary } : n
           )
         );
-        Toast({ message: "Summary generated successfully" });
+        toast.success("Summary generated successfully!", { id: toastId });
+      } else {
+        toast.error("Failed to generate summary", { id: toastId });
       }
     } catch (err) {
-      Toast({ message: "Summarize error" });
+      toast.error("Something went wrong. Please try again.", { id: toastId });
     } finally {
       setSummarizingId(null);
     }
@@ -116,6 +121,8 @@ export default function App() {
     }
 
     setDeletingId(noteId);
+    const toastId = toast.loading("Deleting note...");
+    
     try {
       const res = await fetch(`${BACKEND_URL}/notes/${noteId}`, {
         method: "DELETE",
@@ -125,12 +132,12 @@ export default function App() {
       if (res.ok) {
         setNotes((prev) => prev.filter((n) => n.id !== noteId));
         setTotal((prev) => prev - 1);
-        Toast({ message: "Note deleted successfully" });
+        toast.success("Note deleted successfully!", { id: toastId });
       } else {
-        Toast({ message: "Failed to delete note" });
+        toast.error("Failed to delete note", { id: toastId });
       }
     } catch (err) {
-      Toast({ message: "Failed to delete note" });
+      toast.error("Network error. Please try again.", { id: toastId });
     } finally {
       setDeletingId(null);
     }
@@ -140,6 +147,51 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-200 p-6 font-sans">
+      {/* Toaster Component - Place at root */}
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          // Default options
+          duration: 3000,
+          style: {
+            background: '#171717',
+            color: '#e5e5e5',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '12px',
+            padding: '16px',
+            fontSize: '14px',
+            fontWeight: '600',
+          },
+          // Success toast
+          success: {
+            iconTheme: {
+              primary: '#10b981',
+              secondary: '#171717',
+            },
+            style: {
+              border: '1px solid rgba(16, 185, 129, 0.2)',
+            },
+          },
+          // Error toast
+          error: {
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#171717',
+            },
+            style: {
+              border: '1px solid rgba(239, 68, 68, 0.2)',
+            },
+          },
+          // Loading toast
+          loading: {
+            iconTheme: {
+              primary: '#8b5cf6',
+              secondary: '#171717',
+            },
+          },
+        }}
+      />
+      
       <div className="max-w-5xl mx-auto space-y-8">
         {/* Header Section */}
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -251,6 +303,8 @@ export default function App() {
                           disabled={quizLoadingId === note.id}
                           onClick={async () => {
                             setQuizLoadingId(note.id);
+                            const toastId = toast.loading("Generating quiz questions...");
+                            
                             try {
                               const res = await fetch(
                                 `${BACKEND_URL}/notes/quiz`,
@@ -265,13 +319,19 @@ export default function App() {
                               );
 
                               const data = await res.json();
-                              setQuiz((prev) => ({
-                                ...prev,
-                                [note.id]: data.questions,
-                              }));
+                              
+                              if (res.ok) {
+                                setQuiz((prev) => ({
+                                  ...prev,
+                                  [note.id]: data.questions,
+                                }));
+                                toast.success("Quiz generated successfully!", { id: toastId });
+                              } else {
+                                toast.error("Failed to generate quiz", { id: toastId });
+                              }
                             } catch (error) {
                               console.error(error);
-                              Toast({ message: "Failed to generate quiz" });
+                              toast.error("Network error. Please try again.", { id: toastId });
                             } finally {
                               setQuizLoadingId(null);
                             }
@@ -377,9 +437,14 @@ export default function App() {
                           disabled={askingId === note.id}
                           onClick={async () => {
                             const question = questions[note.id];
-                            if (!question || question.trim().length < 5) return;
+                            if (!question || question.trim().length < 5) {
+                              toast.error("Please ask a longer question");
+                              return;
+                            }
 
                             setAskingId(note.id);
+                            const toastId = toast.loading("AI Tutor is thinking...");
+                            
                             try {
                               const res = await fetch(
                                 `${BACKEND_URL}/notes/tutor`,
@@ -396,14 +461,19 @@ export default function App() {
                                 }
                               );
                               const data = await res.json();
+                              
                               if (res.ok) {
                                 setAnswers((prev) => ({
                                   ...prev,
                                   [note.id]: data.answer,
                                 }));
+                                toast.success("Answer received!", { id: toastId });
+                              } else {
+                                toast.error("Failed to get answer", { id: toastId });
                               }
                             } catch (err) {
                               console.error("Tutor error:", err);
+                              toast.error("Network error. Please try again.", { id: toastId });
                             } finally {
                               setAskingId(null);
                             }

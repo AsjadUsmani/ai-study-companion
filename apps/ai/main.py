@@ -1,10 +1,11 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Header
 from pydantic import BaseModel
 from prompts import summarize_prompt, tutor_prompt, quiz_prompt
 from gemini_client import client
 from google.genai import types
 import json
 import logging
+import os
 
 app = FastAPI()
 logger = logging.getLogger(__name__)
@@ -15,6 +16,10 @@ class TextInput(BaseModel):
 class TutorInput(BaseModel):
     note: str
     question: str
+
+def verify_internal_key(x_internal_key: str = Header(...)):
+    if x_internal_key != os.getenv("INTERNAL_API_KEY"):
+        raise HTTPException(status_code=401)
 
 @app.get('/health')
 def health():
@@ -74,7 +79,7 @@ def quiz(input: dict):
         response = client.models.generate_content(
             model="gemini-2.5-flash",
             config=types.GenerateContentConfig(
-                system_instruction=quiz_prompt(note),
+                system_instruction=quiz_prompt(),
                 response_mime_type="application/json"
             ),
             contents=f"Generate a quiz based on this study material:\n{note}"
