@@ -191,7 +191,7 @@ export const generateQuiz = async (req, res) => {
     });
 
     return res.json(aiRes.data);
-  } catch (err) {
+  } catch (error) {
     console.error("AI ERROR STATUS:", error.response?.status);
   console.error("AI ERROR DATA:", error.response?.data);
   console.error("AI ERROR MESSAGE:", error.message);
