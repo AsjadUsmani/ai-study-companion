@@ -30,50 +30,38 @@ def summarize(input: TextInput, _: None = Depends(verify_internal_key)):
 
     try:
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=text,
-            config=types.GenerateContentConfig(
-                system_instruction="You are a helpful assistant that summarizes text clearly."
+            model="gemini-2.5-flash", config=types.GenerateContentConfig(
+                system_instruction=summarize_prompt(),
             ),
+            contents=text
         )
-
-        text_out = getattr(response, "text", None)
-        if not text_out:
-            raise HTTPException(status_code=500, detail="Empty AI response")
-
-        return {"summary": text_out.strip()}
+        return {
+            "summary": response.text.strip()
+        }
 
     except Exception as e:
-        logger.exception("Summarize failed")
         raise HTTPException(status_code=500, detail="AI summarization failed")
-  
+    
 @app.post("/tutor")
 def tutor(input: TutorInput, _: None = Depends(verify_internal_key)):
     note = input.note.strip()
     question = input.question.strip()
 
     if len(note) < 20 or len(question) < 5:
-        raise HTTPException(status_code=400, detail="Invalid note or question")
-
-    prompt = tutor_prompt(note, question)
-
+        raise HTTPException(status_code=400, detail="Please provide a valid note and question.")
     try:
+        prompt = tutor_prompt(note, question)
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                system_instruction="You are a patient AI tutor who explains concepts clearly."
+            model="gemini-2.5-flash", config=types.GenerateContentConfig(
+                system_instruction=prompt,
             ),
+            contents=f"Please answer this question based on the material: {question}"
         )
 
-        answer = getattr(response, "text", None)
-        if not answer:
-            raise HTTPException(status_code=500, detail="Empty tutor response")
-
-        return {"answer": answer.strip()}
-
+        return {
+            "answer": response.text.strip()
+        }
     except Exception:
-        logger.exception("Tutor error")
         raise HTTPException(status_code=500, detail="Tutor AI failed")
 
 @app.post("/quiz")
@@ -83,24 +71,23 @@ def quiz(input: dict, _: None = Depends(verify_internal_key)):
     if len(note) < 100:
         return {"questions": []}
 
-    prompt = quiz_prompt(note)
-
     try:
         response = client.models.generate_content(
             model="gemini-2.5-flash",
-            contents=prompt,
             config=types.GenerateContentConfig(
-                system_instruction="You generate simple quizzes."
+                system_instruction=quiz_prompt(),
+                response_mime_type="application/json"
             ),
+            contents=f"Generate a quiz based on this study material:\n{note}"
         )
+        
+        if not response.text:
+            raise HTTPException(status_code=500, detail="AI returned empty response")
 
-        text = getattr(response, "text", None)
-        if not text:
-            raise HTTPException(status_code=500, detail="Empty quiz response")
+        return json.loads(response.text)
 
-        # Return raw text (let Node/frontend parse if needed)
-        return {"questions": text.strip()}
-
-    except Exception:
+    except json.JSONDecodeError as e:
+        raise HTTPException(status_code=500, detail="AI returned invalid JSON format") from e
+    except Exception as e:
         logger.exception("Quiz generation error")
-        raise HTTPException(status_code=500, detail="Quiz generation failed")
+        raise HTTPException(status_code=500, detail="Quiz generation failed") from e
