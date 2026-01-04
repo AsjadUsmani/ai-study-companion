@@ -5,11 +5,12 @@ if (!process.env.INTERNAL_API_KEY) {
 }
 
 const aiClient = axios.create({
-    baseURL: process.env.AI_CLIENT_URL || "http://127.0.0.1:8000",
-    timeout: 15000,
-    headers: {
-    "x-internal-key": process.env.INTERNAL_API_KEY,
+  baseURL: process.env.AI_SERVICE_URL,
+  headers: {
+    "Content-Type": "application/json",
+    "x-internal-key": process.env.INTERNAL_API_KEY
   },
-})
+  timeout: 20000
+});
 
 export default aiClient;
