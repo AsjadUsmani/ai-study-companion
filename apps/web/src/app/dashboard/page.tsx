@@ -192,7 +192,7 @@ export default function App() {
         }}
       />
       
-      <div className="max-w-5xl mx-auto space-y-8 mt-6">
+      <div className="max-w-5xl mx-auto space-y-8">
         {/* Header Section */}
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>

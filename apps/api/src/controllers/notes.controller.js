@@ -165,11 +165,18 @@ export const tutorNote = async (req, res) => {
 
     return res.json({ answer: aiRes.data.answer });
   } catch (error) {
-    console.error("AI ERROR STATUS:", error.response?.status);
-  console.error("AI ERROR DATA:", error.response?.data);
+  const status = error.response?.status || 500;
+  const data = error.response?.data;
+
+  console.error("AI ERROR STATUS:", status);
+  console.error("AI ERROR DATA:", data);
   console.error("AI ERROR MESSAGE:", error.message);
-    res.status(500).json({ error: "Tutor mode failed" });
-  }
+
+  return res.status(status).json({
+    error: data?.detail || "AI service failed",
+  });
+}
+
 };
 
 export const generateQuiz = async (req, res) => {
@@ -192,12 +199,18 @@ export const generateQuiz = async (req, res) => {
 
     return res.json(aiRes.data);
   } catch (error) {
-    console.error("AI ERROR STATUS:", error.response?.status);
-  console.error("AI ERROR DATA:", error.response?.data);
+  const status = error.response?.status || 500;
+  const data = error.response?.data;
+
+  console.error("AI ERROR STATUS:", status);
+  console.error("AI ERROR DATA:", data);
   console.error("AI ERROR MESSAGE:", error.message);
-    console.error("Quiz error:", error);
-    res.status(500).json({ error: "Failed to generate quiz" });
-  }
+
+  return res.status(status).json({
+    error: data?.detail || "AI service failed",
+  });
+}
+
 };
 
 export const updateNote = async (req, res) => {
