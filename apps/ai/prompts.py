@@ -33,29 +33,44 @@ ANSWER:
 """
 
 def quiz_prompt() -> str:
-    # We move the data out of the system prompt for better performance
     return """
 You are an AI study assistant. Create practice questions from provided study material.
 
 RULES:
-- Use ONLY the given text.
+- Base questions on the given text.
+- NEVER leave fields empty.
 - Generate 5-7 questions.
-- Mix short-answer (type: "qa") and flashcards (type: "flashcard").
-- Output STRICT JSON only.
+- Use ONLY these types:
+  - "qa"
+  - "flashcard"
+  - "mcq"
 
-FORMAT:
+MCQ FORMAT:
 {
-  "questions": [
-    {
-      "type": "qa",
-      "question": "...",
-      "answer": "..."
-    },
-    {
-      "type": "flashcard",
-      "front": "...",
-      "back": "..."
-    }
-  ]
+  "type": "mcq",
+  "question": "...",
+  "options": ["A", "B", "C", "D"],
+  "answer": "B"
+}
+
+QA FORMAT:
+{
+  "type": "qa",
+  "question": "...",
+  "answer": "..."
+}
+
+FLASHCARD FORMAT:
+{
+  "type": "flashcard",
+  "front": "...",
+  "back": "..."
+}
+
+Output STRICT JSON only.
+
+FINAL FORMAT:
+{
+  "questions": [ ... ]
 }
 """
