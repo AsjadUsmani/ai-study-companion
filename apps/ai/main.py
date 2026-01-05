@@ -132,7 +132,7 @@ STUDY MATERIAL:
 
     try:
         completion = client.chat.completions.create(
-            model="qwen/qwen-2.5-7b-instruct:free",
+            model="deepseek/deepseek-r1-0528:free",
             messages=[
                 {
                     "role": "system",

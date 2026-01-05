@@ -41,8 +41,6 @@ RULES:
 - NEVER leave fields empty.
 - Generate 5-7 questions.
 - Use ONLY these types:
-  - "qa"
-  - "flashcard"
   - "mcq"
 
 MCQ FORMAT:
@@ -51,20 +49,6 @@ MCQ FORMAT:
   "question": "...",
   "options": ["A", "B", "C", "D"],
   "answer": "B"
-}
-
-QA FORMAT:
-{
-  "type": "qa",
-  "question": "...",
-  "answer": "..."
-}
-
-FLASHCARD FORMAT:
-{
-  "type": "flashcard",
-  "front": "...",
-  "back": "..."
 }
 
 Output STRICT JSON only.
