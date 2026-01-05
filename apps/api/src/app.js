@@ -17,7 +17,7 @@ app.use(cookieParser())
 const allowedOrigins = [
   "http://localhost:3000",
   "https://ai-study-companion-iota.vercel.app",
-  process.env.FRONTEND_URL
+   process.env.FRONTEND_URL
 ];
 
 app.use(

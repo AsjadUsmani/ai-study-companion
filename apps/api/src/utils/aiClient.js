@@ -10,7 +10,7 @@ const aiClient = axios.create({
     "Content-Type": "application/json",
     "x-internal-key": process.env.INTERNAL_API_KEY
   },
-  timeout: 20000
+  timeout: 90000
 });
 
 export default aiClient;

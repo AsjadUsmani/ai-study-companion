@@ -165,9 +165,15 @@ export const tutorNote = async (req, res) => {
 
     return res.json({ answer: aiRes.data.answer });
   } catch (error) {
+    if (error.response?.status === 429) {
+      return res.status(429).json({
+        error: "AI quota exceeded. Please wait before retrying.",
+      });
+    }
+
     console.error("AI ERROR STATUS:", error.response?.status);
-  console.error("AI ERROR DATA:", error.response?.data);
-  console.error("AI ERROR MESSAGE:", error.message);
+    console.error("AI ERROR DATA:", error.response?.data);
+    console.error("AI ERROR MESSAGE:", error.message);
     res.status(500).json({ error: "Tutor mode failed" });
   }
 };
@@ -190,13 +196,34 @@ export const generateQuiz = async (req, res) => {
       note: noteRes.rows[0].content,
     });
 
+    if (
+      !aiRes.data ||
+      !Array.isArray(aiRes.data.questions)
+    ) {
+      return res.status(502).json({
+        error: "Invalid quiz data returned by AI",
+      });
+    }
+
     return res.json(aiRes.data);
   } catch (error) {
-    console.error("AI ERROR STATUS:", error.response?.status);
-  console.error("AI ERROR DATA:", error.response?.data);
-  console.error("AI ERROR MESSAGE:", error.message);
-    console.error("Quiz error:", error);
-    res.status(500).json({ error: "Failed to generate quiz" });
+    const status = error.response?.status || 500;
+    const data = error.response?.data;
+
+    console.error("AI ERROR STATUS:", status);
+    console.error("AI ERROR DATA:", data);
+    console.error("AI ERROR MESSAGE:", error.message);
+
+    // Pass through AI rate-limit errors
+    if (status === 429) {
+      return res.status(429).json({
+        error: "AI is temporarily busy. Please try again later.",
+      });
+    }
+
+    res.status(500).json({
+      error: "Failed to generate quiz",
+    });
   }
 };
 
